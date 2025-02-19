@@ -4,11 +4,14 @@
 TARGET="$HOME/.bash_aliases"
 URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases"
 LOCAL_FILE="./.bash_aliases"
+# add input for local file
+dev_mode=$1
+echo $dev_mode
 
 backup_and_replace() {
     cp "$TARGET" "$TARGET.bak"
     echo "Backup of existing .bash_aliases created at $TARGET.bak"
-    if [ "$1" == "--dev" ]; then
+    if [ "$dev_mode" == "--dev" ] || [ "$1" == "r" ]; then
         cp "$LOCAL_FILE" "$TARGET"
         echo "Replaced existing .bash_aliases with the local one."
     else
