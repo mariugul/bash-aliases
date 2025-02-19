@@ -2,23 +2,39 @@
 
 # Define target file
 TARGET="$HOME/.bash_aliases"
-URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_alisaes"
+URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases"
+LOCAL_FILE="./.bash_aliases"
 
 backup_and_replace() {
     cp "$TARGET" "$TARGET.bak"
     echo "Backup of existing .bash_aliases created at $TARGET.bak"
-    curl -sSLo "$TARGET" "$URL"
-    echo "Replaced existing .bash_aliases with the new one."
+    if [ "$1" == "--dev" ]; then
+        cp "$LOCAL_FILE" "$TARGET"
+        echo "Replaced existing .bash_aliases with the local one."
+    else
+        curl -sSLo "$TARGET" "$URL"
+        echo "Replaced existing .bash_aliases with the new one."
+    fi
 }
 
 append_to_existing() {
-    curl -sS "$URL" >> "$TARGET"
-    echo "Appended new aliases to existing .bash_aliases."
+    if [ "$1" == "--dev" ]; then
+        cat "$LOCAL_FILE" >> "$TARGET"
+        echo "Appended local aliases to existing .bash_aliases."
+    else
+        curl -sS "$URL" >> "$TARGET"
+        echo "Appended new aliases to existing .bash_aliases."
+    fi
 }
 
 download_new() {
-    curl -sSLo "$TARGET" "$URL"
-    echo "Downloaded new .bash_aliases."
+    if [ "$1" == "--dev" ]; then
+        cp "$LOCAL_FILE" "$TARGET"
+        echo "Copied local .bash_aliases."
+    else
+        curl -sSLo "$TARGET" "$URL"
+        echo "Downloaded new .bash_aliases."
+    fi
 }
 
 # Backup existing .bash_aliases if it exists
@@ -27,10 +43,10 @@ if [ -f "$TARGET" ]; then
     read -p "Do you want to (a)ppend to it or (r)eplace it? " choice
     case "$choice" in
         a|A)
-            append_to_existing
+            append_to_existing "$1"
             ;;
         r|R)
-            backup_and_replace
+            backup_and_replace "$1"
             ;;
         *)
             echo "Invalid choice. Exiting."
@@ -38,10 +54,9 @@ if [ -f "$TARGET" ]; then
             ;;
     esac
 else
-    download_new
+    download_new "$1"
 fi
-
 
 echo "Bash aliases installed!"
 # Apply changes
-source "$TARGET"
+source "$HOME/.bashrc"
