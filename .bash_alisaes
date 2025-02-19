@@ -1,4 +1,9 @@
 # Methods
+
+is_git_repo() {
+    git rev-parse --is-inside-work-tree 2> /dev/null
+}
+
 alias_add() {
     echo "alias $1='$2'" >> ~/.bash_aliases
     source ~/.bash_aliases
