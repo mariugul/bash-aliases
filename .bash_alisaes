@@ -1,0 +1,114 @@
+# Methods
+alias_add() {
+    echo "alias $1='$2'" >> ~/.bash_aliases
+    source ~/.bash_aliases
+}
+
+current_branch() {
+    git branch --show-current
+}
+
+commits_on_branch() {
+    git rev-list --count $(gitmain)..$(current_branch)
+}
+
+gri() {
+    git rebase -i HEAD~$(commits_on_branch)
+}
+
+gc-release-as() {
+  if [ -z "$1" ]; then
+    echo "Usage: release_as <version>"
+    return 1
+  fi
+
+  version=$1
+  git commit --allow-empty -m "chore(main): release $version" -m "Release-As: $version"
+}
+
+function parse_git_branch() {
+    git branch 2>/dev/null | grep \* | sed 's/* //'
+}
+
+# Git aliases
+alias grm='git rebase main'
+alias gs='git status'
+alias gl='git log'
+alias glo='git log --oneline --graph --decorate'
+alias gb='git branch'
+alias gbo='printf "Current Branch -> \033[01;36m$(parse_git_branch)\033[00m\\n"'
+alias gco='git checkout'
+alias gc='git commit -m'
+alias gca='git add . && git commit -m'
+alias gps='git push'
+alias gpsupstream='git push --set-upstream origin $(git branch --show-current)'
+alias gpu='git pull'
+alias gpur='git pull --rebase'
+alias gss='git stash save'
+alias gconfig='git config --global --edit'
+alias gpf='git push --force'
+alias gfo='git fetch origin main:main'
+alias gsw='git switch'
+alias gswc='git switch -c'
+alias gswm='git switch main'
+alias gsw-='git switch -'
+alias gcnoverify='git commit --no-verify'
+alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
+alias gitundolast='git reset --soft HEAD~1'
+alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{print $1}" | xargs -r git branch -D'
+alias gitmain='git symbolic-ref refs/remotes/origin/HEAD | sed "s@^refs/remotes/origin/@@"'
+
+
+# Github CLI
+# create PR on current branch
+alias prcreate="gh pr create --base main --head \$(git branch --show-current)"
+alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
+alias prcreate="gh pr create --base $(gitmain) --head \$(git branch --show-current)"
+alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
+
+# Aliases
+alias ..='cd ..'
+alias bash-rc='code ~/.bashrc'
+alias bash-aliases='code ~/.bash_aliases'
+alias sourcebashrc='source ~/.bashrc'
+
+# Show help for commands
+function show-help() {
+    echo "Available commands:"
+    echo "  c: clear the terminal"
+    echo "  ..: go up one directory"
+    echo "  bash-rc: open .bashrc file in VS Code"
+    echo "  bash-aliases: open .bash_aliases file in VS Code"
+    echo "  sourcebashrc: apply changes to .bashrc file"
+    echo "  gri: git rebase -i"
+    echo "  grm: git rebase <main branch>"
+    echo "  gs: git status"
+    echo "  gl: git log with options"
+    echo "  gb: git branch --list --format"
+    echo "  gco: git checkout"
+    echo "  gc: git commit -m"
+    echo "  gcnv: git commit --no-verify"
+    echo "  gcempty: git commit --allow-empty -m 'chore(drop): trigger CI (DROP ME)'"
+    echo "  gca: git add . && git commit -m"
+    echo "  gps: git push"
+    echo "  gpsupstream: git push current branch upstream."
+    echo "  gpu: git pull"
+    echo "  gpur: git pull --rebase"
+    echo "  gss: git stash save"
+    echo "  gconfig: git config"
+    echo "  gpf: git push --force"
+    echo "  gfo: git fetch origin <main>:<main>"
+    echo "  gsw: git switch"
+    echo "  gswc: git switch -c"
+    echo "  gswcm: git switch -c <main branch>"
+    echo "  gswm: git switch <main branch>"
+    echo "  gsw-: git switch -"
+    echo "  gitundolast: git reset --soft HEAD~1"
+    echo "  gitcleanup: Removes local branches that no longer exist on the remote"
+    echo "  pr: gh pr create --base <main branch> --head $(git branch --show-current)"
+    echo "  prcreate: Create a PR on this branch."
+    echo "  prview: Open PR on this branch in browser."
+}
+
+# Alias for showing commands help
+alias help="show_commands_help"
