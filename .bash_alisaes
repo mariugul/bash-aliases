@@ -8,7 +8,10 @@ current_branch() {
     git branch --show-current
 }
 
-alias gitmain='git symbolic-ref refs/remotes/origin/HEAD | sed "s@^refs/remotes/origin/@@"'
+function gitmain() {
+    git symbolic-ref refs/remotes/origin/HEAD | sed "s@^refs/remotes/origin/@@"
+}
+
 
 commits_on_branch() {
     git rev-list --count $(gitmain)..$(current_branch)
