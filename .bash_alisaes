@@ -114,6 +114,3 @@ function show-help() {
     echo "  prcreate: Create a PR on this branch."
     echo "  prview: Open PR on this branch in browser."
 }
-
-# Alias for showing commands help
-alias help="show_commands_help"
