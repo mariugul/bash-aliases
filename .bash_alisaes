@@ -81,6 +81,10 @@ alias bash-rc='code ~/.bashrc'
 alias bash-aliases='code ~/.bash_aliases'
 alias sourcebashrc='source ~/.bashrc'
 alias c='clear'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
 
 # Show help for commands
 function show-help() {
