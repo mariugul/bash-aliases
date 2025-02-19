@@ -75,6 +75,7 @@ alias ..='cd ..'
 alias bash-rc='code ~/.bashrc'
 alias bash-aliases='code ~/.bash_aliases'
 alias sourcebashrc='source ~/.bashrc'
+alias c='clear'
 
 # Show help for commands
 function show-help() {
