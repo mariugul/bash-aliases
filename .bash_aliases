@@ -72,6 +72,15 @@ alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{p
 # create PR on current branch
 alias prcreate="gh pr create --base $(gitmain) --head \$(git branch --show-current)"
 alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
+function prcheckout() {
+    # Checks out a GitHub PR when opened from a forked repo
+    read -p "Enter the PR number to checkout: " pr_number
+    if [[ ! -z "$pr_number" ]]; then
+        gh pr checkout "$pr_number"
+    else
+        echo "No PR number entered. Please try again."
+    fi
+}
 
 # Aliases
 alias ..='cd ..'
