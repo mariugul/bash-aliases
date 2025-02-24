@@ -19,7 +19,11 @@ function gitmain() {
 
 
 commits_on_branch() {
-    git rev-list --count $(gitmain)..$(current_branch)
+    if [ "$(current_branch)" = "$(gitmain)" ]; then
+        git rev-list --count main
+    else
+        git rev-list --count $(gitmain)..$(current_branch)
+    fi
 }
 
 gri() {
