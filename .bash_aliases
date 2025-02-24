@@ -92,6 +92,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
+alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
 
 # Show help for commands
 function show-help() {
@@ -106,6 +107,7 @@ function show-help() {
     echo "  bash-rc         : open .bashrc file in VS Code"
     echo "  bash-aliases    : open .bash_aliases file in VS Code"
     echo "  sourcebashrc    : apply changes to .bashrc file"
+    echo "  upgrade-aliases : upgrade bash aliases"
     echo ""
     echo "Git:"
     echo "  gri             : git rebase -i"
