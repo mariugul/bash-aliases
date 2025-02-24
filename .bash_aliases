@@ -39,8 +39,7 @@ gri() {
     local main_branch=$(gitmain)
     local current_branch=$(current_branch)
     if [ "$current_branch" = "$main_branch" ]; then
-        local commit_count=$(git rev-list --count $main_branch)
-        echo "You are on the main branch with $commit_count commits."
+        echo "You are on the main branch with $(commits_on_branch) commits."
         echo "Rebasing and force pushing the main branch is dangerous."
         read -p "How many commits do you want to interactively rebase? " rebase_count
         git rebase -i HEAD~$rebase_count
