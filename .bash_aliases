@@ -94,13 +94,13 @@ function prcheckout() {
 alias ..='cd ..'
 alias bash-rc='code ~/.bashrc'
 alias bash-aliases='code ~/.bash_aliases'
-alias sourcebashrc='source ~/.bashrc'
+alias sourcebashrc='source ~/.bashrc && echo "Bash aliases reloaded."'
 alias c='clear'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
-alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
+alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh) && $(sourcebashrc)'
 
 # Show help for commands
 function show-help() {
