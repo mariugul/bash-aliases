@@ -17,10 +17,15 @@ current_branch() {
     git branch --show-current
 }
 
-function gitmain() {
-    git symbolic-ref refs/remotes/origin/HEAD | sed "s@^refs/remotes/origin/@@"
-}
+declare -A MAIN_BRANCHES
 
+function gitmain() {
+    local repo=$(current_repo)
+    if [ -z "${MAIN_BRANCHES[$repo]}" ]; then
+        MAIN_BRANCHES[$repo]=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+    fi
+    echo "${MAIN_BRANCHES[$repo]}"
+}
 
 commits_on_branch() {
     if [ "$(current_branch)" = "$(gitmain)" ]; then
