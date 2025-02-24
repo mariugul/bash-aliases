@@ -1,5 +1,9 @@
 # Methods
 
+current_repo() {
+    git remote get-url origin 2> /dev/null | sed -n 's#.*/\([^.]*\)\.git#\1#p'
+}
+
 is_git_repo() {
     git rev-parse --is-inside-work-tree 2> /dev/null
 }
