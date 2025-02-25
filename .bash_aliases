@@ -29,7 +29,7 @@ function gitmain() {
 
 commits_on_branch() {
     if [ "$(current_branch)" = "$(gitmain)" ]; then
-        git rev-list --count main
+        git rev-list --count $(gitmain)
     else
         git rev-list --count $(gitmain)..$(current_branch)
     fi
@@ -55,7 +55,7 @@ gc-release-as() {
   fi
 
   version=$1
-  git commit --allow-empty -m "chore(main): release $version" -m "Release-As: $version"
+  git commit --allow-empty -m "chore($(gitmain)): release $version" -m "Release-As: $version"
 }
 
 function parse_git_branch() {
@@ -63,7 +63,7 @@ function parse_git_branch() {
 }
 
 # Git aliases
-alias grm='git rebase main'
+alias grm="git rebase $(gitmain)"
 alias gs='git status'
 alias gl='git log'
 alias glo='git log --oneline --graph --decorate'
@@ -79,10 +79,10 @@ alias gpur='git pull --rebase'
 alias gss='git stash save'
 alias gconfig='git config --global --edit'
 alias gpf='git push --force'
-alias gfo='git fetch origin main:main'
+alias gfo="git fetch origin $(gitmain):$(gitmain)"
 alias gsw='git switch'
 alias gswc='git switch -c'
-alias gswm='git switch main'
+alias gswm="git switch $(gitmain)"
 alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
@@ -133,7 +133,7 @@ function show-help() {
     echo ""
     echo "Git:"
     echo "  gri             : git rebase -i"
-    echo "  grm             : git rebase main"
+    echo "  grm             : git rebase $(gitmain)"
     echo "  gs              : git status"
     echo "  gl              : git log"
     echo "  glo             : git log --oneline --graph --decorate"
@@ -149,10 +149,10 @@ function show-help() {
     echo "  gss             : git stash save"
     echo "  gconfig         : git config --global --edit"
     echo "  gpf             : git push --force"
-    echo "  gfo             : git fetch origin main:main"
+    echo "  gfo             : git fetch origin $(gitmain):$(gitmain)"
     echo "  gsw             : git switch"
     echo "  gswc            : git switch -c"
-    echo "  gswm            : git switch main"
+    echo "  gswm            : git switch $(gitmain)"
     echo "  gsw-            : git switch -"
     echo "  gcnoverify      : git commit --no-verify"
     echo "  gcempty         : git commit --allow-empty -m 'chore(drop): trigger CI (DROP ME)'"
@@ -160,6 +160,17 @@ function show-help() {
     echo "  gitcleanup      : git fetch --prune && git branch -vv | grep ': gone]' | awk '{print \$1}' | xargs -r git branch -D"
     echo ""
     echo "GitHub CLI:"
-    echo "  prcreate        : gh pr create --base main --head \$(git branch --show-current)"
+    echo "  prcreate        : gh pr create --base $(gitmain) --head \$(git branch --show-current)"
     echo "  prview          : open PR in browser"
+    echo "  prcheckout      : checkout a GitHub PR by number"
+    echo ""
+    echo "Methods:"
+    echo "  current_repo    : get the current repository name"
+    echo "  is_git_repo     : check if the current directory is a git repository"
+    echo "  alias_add       : add a new alias"
+    echo "  current_branch  : get the current git branch"
+    echo "  gitmain         : get the $(gitmain) branch of the repository"
+    echo "  commits_on_branch : get the number of commits on the current branch"
+    echo "  gc-release-as   : create a release commit with a specified version"
+    echo "  parse_git_branch: parse and display the current git branch"
 }
