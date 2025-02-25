@@ -20,7 +20,17 @@ current_branch() {
 declare -A MAIN_BRANCHES
 
 function gitmain() {
+    if ! is_git_repo; then
+        echo "Not a git repository."
+        return 1
+    fi
+
     local repo=$(current_repo)
+    if [ -z "$repo" ]; then
+        echo "Unable to determine repository name."
+        return 1
+    fi
+
     if [ -z "${MAIN_BRANCHES[$repo]}" ]; then
         MAIN_BRANCHES[$repo]=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
     fi
@@ -114,7 +124,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
-alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
+alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh) && $(sourcebashrc)'
 
 # Show help for commands
 function show-help() {
