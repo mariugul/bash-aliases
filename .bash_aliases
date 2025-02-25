@@ -139,7 +139,7 @@ function show-help() {
     echo "  bash-rc         : open .bashrc file in VS Code"
     echo "  bash-aliases    : open .bash_aliases file in VS Code"
     echo "  sourcebashrc    : apply changes to .bashrc file"
-    echo "  upgrade-aliases : upgrade bash aliases"
+    echo "  upgrade-aliases : upgrade bash aliases. Add --dev to install local version of the bash-aliases file."
     echo ""
     echo "Git:"
     echo "  gri             : git rebase -i"
