@@ -17,62 +17,65 @@ This command will:
 
 After installation, you can use the following aliases and functions:
 
-### Git Aliases
-- `grm`: Rebase onto the main branch.
-- `gri`: Interactively rebase commits.
-- `gs`: Show the git status.
-- `gl`: Show the git log.
-- `glo`: Show the git log in a one-line format with graph and decorations.
-- `gb`: List git branches.
-- `gbo`: Show the current branch.
-- `gco`: Checkout a git branch.
-- `gc`: Commit with a message.
-- `gca`: Add all changes and commit with a message.
-- `gps`: Push changes to the remote repository.
-- `gpsupstream`: Push the current branch and set upstream.
-- `gpu`: Pull changes from the remote repository.
-- `gpur`: Pull changes with rebase.
-- `gss`: Save changes to the stash.
-- `gconfig`: Edit global git configuration.
-- `gpf`: Force push changes.
-- `gfo`: Fetch the main branch from the origin.
-- `gsw`: Switch branches.
-- `gswc`: Create and switch to a new branch.
-- `gswm`: Switch to the main branch.
-- `gsw-`: Switch to the previous branch.
-- `gcnoverify`: Commit without verification.
-- `gcempty`: Create an empty commit.
-- `gitundolast`: Undo the last commit.
-- `gitcleanup`: Clean up local branches that no longer exist on the remote.
+```txt
+Available commands:
 
-### GitHub CLI Aliases
-- `prcreate`: Create a pull request on the current branch.
-- `prview`: Open the pull request in the browser.
-- `prcheckout`: Checkout a GitHub PR by number.
+General:
+  c               : clear the terminal
+  ..              : go up one directory
+  ...             : go up two directories
+  ....            : go up three directories
+  .....           : go up four directories
+  bash-rc         : open .bashrc file in VS Code
+  bash-aliases    : open .bash_aliases file in VS Code
+  sourcebashrc    : apply changes to .bashrc file
+  upgrade-aliases : upgrade bash aliases. Add --dev to install local version of the bash-aliases file.
+  open-alias-repo : open the bash-aliases GitHub repository in the default web browser
 
-### General Aliases
-- `..`: Go up one directory.
-- `...`: Go up two directories.
-- `....`: Go up three directories.
-- `.....`: Go up four directories.
-- `bash-rc`: Open the `.bashrc` file in VS Code.
-- `bash-aliases`: Open the `.bash_aliases` file in VS Code.
-- `sourcebashrc`: Apply changes to the `.bashrc` file.
-- `c`: Clear the terminal.
-- `upgrade-aliases`: Upgrade bash aliases. Add `--dev` to install the local version of the bash-aliases file.
+Git:
+  gri             : git rebase -i
+  grm             : git rebase main
+  gs              : git status
+  gl              : git log
+  glo             : git log --oneline --graph --decorate
+  gb              : git branch
+  gbo             : show current branch
+  gco             : git checkout
+  gc              : git commit -m
+  gca             : git add . && git commit -m
+  gps             : git push
+  gpsupstream     : git push --set-upstream origin main
+  gpu             : git pull
+  gpur            : git pull --rebase
+  gss             : git stash save
+  gconfig         : git config --global --edit
+  gpf             : git push --force
+  gfo             : git fetch origin main:main
+  gsw             : git switch
+  gswc            : git switch -c
+  gswm            : git switch main
+  gsw-            : git switch -
+  gcnoverify      : git commit --no-verify
+  current_repo    : get the current repository name
+  commits_on_branch : get the number of commits on the current branch
+  gitundolast     : git reset --soft HEAD~1
+  gitcleanup      : git fetch --prune && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r git branch -D
 
-### Methods
-- `current_repo`: Get the current repository name.
-- `is_git_repo`: Check if the current directory is a git repository.
-- `alias_add`: Add a new alias.
-- `current_branch`: Get the current git branch.
-- `gitmain`: Get the main branch of the repository.
-- `commits_on_branch`: Get the number of commits on the current branch.
-- `gc-release-as`: Create a release commit with a specified version.
-- `parse_git_branch`: Parse and display the current git branch.
+GitHub CLI:
+  prcreate        : gh pr create --base main --head 795798current_branch
+  prcreate        : gh pr create --base main --head main
+  prcheckout      : checkout a GitHub PR by number
 
-### Help
-- `show-help`: Show available commands and their descriptions.
+Methods:
+  current_repo    : get the current repository name
+  is_git_repo     : check if the current directory is a git repository
+  alias_add       : add a new alias
+  current_branch  : get the current git branch
+  gitmain         : get the main branch of the repository
+  commits_on_branch : get the number of commits on the current branch
+  gc-release-as   : create a release commit with a specified version
+  parse_git_branch: parse and display the current git branch
+```
 
 ## Updating Aliases
 
