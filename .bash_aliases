@@ -73,7 +73,9 @@ function parse_git_branch() {
 }
 
 # Git aliases
-alias grm="git rebase $(gitmain)"
+function grm() {
+    git rebase $(gitmain)
+}
 alias gs='git status'
 alias gl='git log'
 alias glo='git log --oneline --graph --decorate'
@@ -83,16 +85,22 @@ alias gco='git checkout'
 alias gc='git commit -m'
 alias gca='git add . && git commit -m'
 alias gps='git push'
-alias gpsupstream='git push --set-upstream origin $(git branch --show-current)'
+function gpsupstream() {
+    git push --set-upstream origin $(current_branch)
+}
 alias gpu='git pull'
 alias gpur='git pull --rebase'
 alias gss='git stash save'
 alias gconfig='git config --global --edit'
 alias gpf='git push --force'
-alias gfo="git fetch origin $(gitmain):$(gitmain)"
+function gfo() {
+    git fetch origin $(gitmain):$(gitmain)
+}
 alias gsw='git switch'
 alias gswc='git switch -c'
-alias gswm="git switch $(gitmain)"
+function gswm(){
+    git switch $(gitmain)
+}
 alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
@@ -102,7 +110,9 @@ alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{p
 
 # Github CLI
 # create PR on current branch
-alias prcreate="gh pr create --base $(gitmain) --head \$(git branch --show-current)"
+function prcreate() {
+    gh pr create --base $(gitmain) --head $(current_branch)
+}
 alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
 function prcheckout() {
     # Checks out a GitHub PR when opened from a forked repo
@@ -128,6 +138,9 @@ alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugu
 
 # Show help for commands
 function show-help() {
+    local main_branch=$(gitmain)
+    local current_branch=$(current_branch)
+
     echo "Available commands:"
     echo ""
     echo "General:"
@@ -143,7 +156,7 @@ function show-help() {
     echo ""
     echo "Git:"
     echo "  gri             : git rebase -i"
-    echo "  grm             : git rebase $(gitmain)"
+    echo "  grm             : git rebase $main_branch"
     echo "  gs              : git status"
     echo "  gl              : git log"
     echo "  glo             : git log --oneline --graph --decorate"
@@ -153,16 +166,16 @@ function show-help() {
     echo "  gc              : git commit -m"
     echo "  gca             : git add . && git commit -m"
     echo "  gps             : git push"
-    echo "  gpsupstream     : git push --set-upstream origin \$(git branch --show-current)"
+    echo "  gpsupstream     : git push --set-upstream origin $current_branch"
     echo "  gpu             : git pull"
     echo "  gpur            : git pull --rebase"
     echo "  gss             : git stash save"
     echo "  gconfig         : git config --global --edit"
     echo "  gpf             : git push --force"
-    echo "  gfo             : git fetch origin $(gitmain):$(gitmain)"
+    echo "  gfo             : git fetch origin $main_branch:$main_branch"
     echo "  gsw             : git switch"
     echo "  gswc            : git switch -c"
-    echo "  gswm            : git switch $(gitmain)"
+    echo "  gswm            : git switch $main_branch"
     echo "  gsw-            : git switch -"
     echo "  gcnoverify      : git commit --no-verify"
     echo "  gcempty         : git commit --allow-empty -m 'chore(drop): trigger CI (DROP ME)'"
@@ -170,7 +183,7 @@ function show-help() {
     echo "  gitcleanup      : git fetch --prune && git branch -vv | grep ': gone]' | awk '{print \$1}' | xargs -r git branch -D"
     echo ""
     echo "GitHub CLI:"
-    echo "  prcreate        : gh pr create --base $(gitmain) --head \$(git branch --show-current)"
+    echo "  prcreate        : gh pr create --base $main_branch --head $$current_branch"
     echo "  prview          : open PR in browser"
     echo "  prcheckout      : checkout a GitHub PR by number"
     echo ""
@@ -179,7 +192,7 @@ function show-help() {
     echo "  is_git_repo     : check if the current directory is a git repository"
     echo "  alias_add       : add a new alias"
     echo "  current_branch  : get the current git branch"
-    echo "  gitmain         : get the $(gitmain) branch of the repository"
+    echo "  gitmain         : get the $main_branch branch of the repository"
     echo "  commits_on_branch : get the number of commits on the current branch"
     echo "  gc-release-as   : create a release commit with a specified version"
     echo "  parse_git_branch: parse and display the current git branch"
