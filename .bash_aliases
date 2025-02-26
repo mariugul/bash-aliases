@@ -121,7 +121,10 @@ function gpsupstream() {
         local upstream_branch=$(echo "$branches" | head -n 1)
     else
         echo "Available upstream branches:"
-        echo "$branches"
+        for branch in $branches; do
+            echo "* $branch"
+        done
+        echo ""
         read -p "Enter the upstream branch to set: " upstream_branch
     fi
 
