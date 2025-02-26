@@ -16,7 +16,12 @@ check_git_repo() {
 }
 
 alias_add() {
-    echo "alias $1='$2'" >> ~/.bash_aliases
+    if ! grep -q "alias $1=" ~/.bash_aliases; then
+        echo "alias $1='$2'" >> ~/.bash_aliases
+        source ~/.bash_aliases
+    else
+        echo "Alias $1 already exists."
+    fi
     source ~/.bash_aliases
 }
 
@@ -62,7 +67,12 @@ gri() {
         read -p "How many commits do you want to interactively rebase? " rebase_count
         git rebase -i HEAD~$rebase_count
     else
-        git rebase -i HEAD~$(commits_on_branch)
+        local commit_count=$(commits_on_branch)
+        if [ $? -ne 0 ]; then
+            echo "Error: Unable to determine the number of commits on the branch."
+            return 1
+        fi
+        git rebase -i HEAD~$commit_count
     fi
 }
 
@@ -78,11 +88,17 @@ gc-release-as() {
     git commit --allow-empty -m "chore($(gitmain)): release $version" -m "Release-As: $version"
 }
 
-function parse_git_branch() {
-    git branch 2>/dev/null | grep \* | sed 's/* //'
-}
+function grm() {
+    check_git_repo || return 1
 
-# Git aliases
+    local main_branch=$(gitmain)
+    if [ $? -ne 0 ]; then
+        echo "Failed to determine the main branch."
+        return 1
+    fi
+
+    git rebase "$main_branch"
+}
 function grm() {
     check_git_repo || return 1
 
@@ -123,7 +139,7 @@ alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
-alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{print $1}" | xargs -r git branch -D'
+alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{print \$1}" | xargs -r git branch -D'
 
 
 # Github CLI
@@ -147,7 +163,6 @@ function prcheckout() {
 }
 
 # Aliases
-alias ..='cd ..'
 alias bash-rc='code ~/.bashrc'
 alias bash-aliases='code ~/.bash_aliases'
 alias sourcebashrc='source ~/.bashrc && echo "Bash aliases reloaded."'
@@ -200,13 +215,14 @@ function show-help() {
     echo "  gswm            : git switch $main_branch"
     echo "  gsw-            : git switch -"
     echo "  gcnoverify      : git commit --no-verify"
-    echo "  gcempty         : git commit --allow-empty -m 'chore(drop): trigger CI (DROP ME)'"
+    echo "  current_repo    : get the current repository name"
+    echo "  commits_on_branch : get the number of commits on the current branch"
     echo "  gitundolast     : git reset --soft HEAD~1"
     echo "  gitcleanup      : git fetch --prune && git branch -vv | grep ': gone]' | awk '{print \$1}' | xargs -r git branch -D"
     echo ""
     echo "GitHub CLI:"
     echo "  prcreate        : gh pr create --base $main_branch --head $$current_branch"
-    echo "  prview          : open PR in browser"
+    echo "  prcreate        : gh pr create --base $main_branch --head $current_branch"
     echo "  prcheckout      : checkout a GitHub PR by number"
     echo ""
     echo "Methods:"
