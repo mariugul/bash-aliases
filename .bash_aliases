@@ -5,7 +5,14 @@ current_repo() {
 }
 
 is_git_repo() {
-    git rev-parse --is-inside-work-tree 2> /dev/null
+    git rev-parse --is-inside-work-tree > /dev/null 2>&1
+}
+
+check_git_repo() {
+    if ! is_git_repo; then
+        echo "Not a git repository."
+        return 1
+    fi
 }
 
 alias_add() {
@@ -20,10 +27,7 @@ current_branch() {
 declare -A MAIN_BRANCHES
 
 function gitmain() {
-    if ! is_git_repo; then
-        echo "Not a git repository."
-        return 1
-    fi
+    check_git_repo || return 1
 
     local repo=$(current_repo)
     if [ -z "$repo" ]; then
@@ -38,6 +42,8 @@ function gitmain() {
 }
 
 commits_on_branch() {
+    check_git_repo || return 1
+
     if [ "$(current_branch)" = "$(gitmain)" ]; then
         git rev-list --count $(gitmain)
     else
@@ -46,6 +52,8 @@ commits_on_branch() {
 }
 
 gri() {
+    check_git_repo || return 1
+
     local main_branch=$(gitmain)
     local current_branch=$(current_branch)
     if [ "$current_branch" = "$main_branch" ]; then
@@ -59,13 +67,15 @@ gri() {
 }
 
 gc-release-as() {
-  if [ -z "$1" ]; then
-    echo "Usage: release_as <version>"
-    return 1
-  fi
+    check_git_repo || return 1
 
-  version=$1
-  git commit --allow-empty -m "chore($(gitmain)): release $version" -m "Release-As: $version"
+    if [ -z "$1" ]; then
+        echo "Usage: release_as <version>"
+        return 1
+    fi
+
+    version=$1
+    git commit --allow-empty -m "chore($(gitmain)): release $version" -m "Release-As: $version"
 }
 
 function parse_git_branch() {
@@ -74,6 +84,8 @@ function parse_git_branch() {
 
 # Git aliases
 function grm() {
+    check_git_repo || return 1
+
     git rebase $(gitmain)
 }
 alias gs='git status'
@@ -86,6 +98,8 @@ alias gc='git commit -m'
 alias gca='git add . && git commit -m'
 alias gps='git push'
 function gpsupstream() {
+    check_git_repo || return 1
+
     git push --set-upstream origin $(current_branch)
 }
 alias gpu='git pull'
@@ -94,11 +108,15 @@ alias gss='git stash save'
 alias gconfig='git config --global --edit'
 alias gpf='git push --force'
 function gfo() {
+    check_git_repo || return 1
+
     git fetch origin $(gitmain):$(gitmain)
 }
 alias gsw='git switch'
 alias gswc='git switch -c'
 function gswm(){
+    check_git_repo || return 1
+
     git switch $(gitmain)
 }
 alias gsw-='git switch -'
@@ -111,10 +129,14 @@ alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{p
 # Github CLI
 # create PR on current branch
 function prcreate() {
+    check_git_repo || return 1
+
     gh pr create --base $(gitmain) --head $(current_branch)
 }
 alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
 function prcheckout() {
+    check_git_repo || return 1
+
     # Checks out a GitHub PR when opened from a forked repo
     read -p "Enter the PR number to checkout: " pr_number
     if [[ ! -z "$pr_number" ]]; then
@@ -134,7 +156,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
-alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh) && $(sourcebashrc)'
+alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
 
 # Show help for commands
 function show-help() {
