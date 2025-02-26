@@ -140,7 +140,7 @@ alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
 alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{print \$1}" | xargs -r git branch -D'
-
+alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases &> /dev/null & )'
 
 # Github CLI
 # create PR on current branch
@@ -190,6 +190,7 @@ function show-help() {
     echo "  bash-aliases    : open .bash_aliases file in VS Code"
     echo "  sourcebashrc    : apply changes to .bashrc file"
     echo "  upgrade-aliases : upgrade bash aliases. Add --dev to install local version of the bash-aliases file."
+    echo "  open-alias-repo : open the bash-aliases GitHub repository in the default web browser"
     echo ""
     echo "Git:"
     echo "  gri             : git rebase -i"
