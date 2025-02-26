@@ -116,7 +116,21 @@ alias gps='git push'
 function gpsupstream() {
     check_git_repo || return 1
 
-    git push --set-upstream origin $(current_branch)
+    local branches=$(git remote -v | awk '{print $1}' | uniq)
+    if [ $(echo "$branches" | wc -l) -eq 1 ]; then
+        local upstream_branch=$(echo "$branches" | head -n 1)
+    else
+        echo "Available upstream branches:"
+        echo "$branches"
+        read -p "Enter the upstream branch to set: " upstream_branch
+    fi
+
+    if [[ -z "$upstream_branch" ]]; then
+        echo "No upstream branch entered. Please try again."
+        return 1
+    fi
+
+    git push --set-upstream "$upstream_branch" $(current_branch)
 }
 alias gpu='git pull'
 alias gpur='git pull --rebase'
