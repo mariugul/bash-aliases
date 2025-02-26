@@ -10,14 +10,13 @@ To install the bash aliases, run the following command in your terminal:
 bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)
 ```
 
-This command will:
-- Run the script to install the bash aliases.
-
 ## Usage
 
 After installation, you can use the following aliases and functions:
 
 ```txt
+$ show-help
+
 Available commands:
 
 General:
@@ -84,5 +83,3 @@ To get the newest updates from the aliases upstream, you can run the following c
 ```bash
 upgrade-aliases
 ```
-
-This command will fetch the latest version of the bash aliases and apply the updates.
