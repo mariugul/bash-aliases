@@ -40,6 +40,8 @@ download_new() {
     fi
 }
 
+echo "Installing bash aliases..."
+
 # Backup existing .bash_aliases if it exists
 if [ -f "$TARGET" ]; then
     echo "A .bash_aliases file already exists."
