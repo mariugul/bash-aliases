@@ -177,6 +177,19 @@ alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
+function gitcleanup() {
+    check_git_repo || return 1
+
+    git fetch --prune
+    local branches_to_delete=$(git branch -vv | grep ": gone]" | awk '{print $1}')
+    if [ -z "$branches_to_delete" ]; then
+        echo "No branches to clean up."
+    else
+        echo "Cleaning up the following branches:"
+        echo "$branches_to_delete"
+        echo "$branches_to_delete" | xargs -r git branch -D
+    fi
+}
 function gbd() {
     check_git_repo || return 1
 
