@@ -121,10 +121,7 @@ function gpsupstream() {
         local upstream_branch=$(echo "$branches" | head -n 1)
     else
         echo "Available upstream branches:"
-        for branch in $branches; do
-            echo "* $branch"
-        done
-        echo ""
+        echo "$branches"
         read -p "Enter the upstream branch to set: " upstream_branch
     fi
 
@@ -145,12 +142,36 @@ function gfo() {
 
     git fetch origin $(gitmain):$(gitmain)
 }
-alias gsw='git switch'
 alias gswc='git switch -c'
 function gswm(){
     check_git_repo || return 1
 
     git switch $(gitmain)
+}
+function gsw() {
+    check_git_repo || return 1
+
+    if [ -z "$1" ]; then
+        local branches=($(git branch --format='%(refname:short)'))
+        local current_branch=$(current_branch)
+        echo "Available branches:"
+        for i in "${!branches[@]}"; do
+            if [ "${branches[$i]}" = "$current_branch" ]; then
+                echo -e "  $i) \033[0;32m${branches[$i]}\033[0m"
+            else
+                echo "  $i) ${branches[$i]}"
+            fi
+        done
+        echo ""
+        read -p "Select a branch to switch to: " branch_index
+        if [[ -z "${branches[$branch_index]}" ]]; then
+            echo "Invalid selection. Please try again."
+            return 1
+        fi
+        git switch "${branches[$branch_index]}"
+    else
+        git switch "$1"
+    fi
 }
 alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
