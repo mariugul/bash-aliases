@@ -276,6 +276,7 @@ function show-help() {
     echo "  gl              : git log"
     echo "  glo             : git log --oneline --graph --decorate"
     echo "  gb              : git branch"
+    echo "  gbd             : Delete a local branch from the list"
     echo "  gbo             : show current branch"
     echo "  gco             : git checkout"
     echo "  gc              : git commit -m"
