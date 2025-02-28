@@ -31,7 +31,7 @@ current_branch() {
 
 declare -A MAIN_BRANCHES
 
-function gitmain() {
+gitmain() {
     check_git_repo || return 1
 
     local repo=$(current_repo)
@@ -88,7 +88,7 @@ gc-release-as() {
     git commit --allow-empty -m "chore($(gitmain)): release $version" -m "Release-As: $version"
 }
 
-function grm() {
+grm() {
     check_git_repo || return 1
 
     local main_branch=$(gitmain)
@@ -99,7 +99,7 @@ function grm() {
 
     git rebase "$main_branch"
 }
-function grm() {
+grm() {
     check_git_repo || return 1
 
     git rebase $(gitmain)
@@ -113,7 +113,7 @@ alias gco='git checkout'
 alias gc='git commit -m'
 alias gca='git add . && git commit -m'
 alias gps='git push'
-function gpsupstream() {
+gpsupstream() {
     check_git_repo || return 1
 
     local branches=$(git remote -v | awk '{print $1}' | uniq)
@@ -137,18 +137,18 @@ alias gpur='git pull --rebase'
 alias gss='git stash save'
 alias gconfig='git config --global --edit'
 alias gpf='git push --force'
-function gfo() {
+gfo() {
     check_git_repo || return 1
 
     git fetch origin $(gitmain):$(gitmain)
 }
 alias gswc='git switch -c'
-function gswm(){
+gswm(){
     check_git_repo || return 1
 
     git switch $(gitmain)
 }
-function gsw() {
+gsw() {
     check_git_repo || return 1
 
     if [ -z "$1" ]; then
@@ -177,7 +177,7 @@ alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
-function gitcleanup() {
+gitcleanup() {
     check_git_repo || return 1
 
     git fetch --prune
@@ -190,7 +190,7 @@ function gitcleanup() {
         echo "$branches_to_delete" | xargs -r git branch -D
     fi
 }
-function gbd() {
+gbd() {
     check_git_repo || return 1
 
     local branches=($(git branch --format='%(refname:short)'))
@@ -221,13 +221,13 @@ alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases &> /d
 
 # Github CLI
 # create PR on current branch
-function prcreate() {
+prcreate() {
     check_git_repo || return 1
 
     gh pr create --base $(gitmain) --head $(current_branch)
 }
 alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
-function prcheckout() {
+prcheckout() {
     check_git_repo || return 1
 
     # Checks out a GitHub PR when opened from a forked repo
@@ -251,7 +251,7 @@ alias .....='cd ../../../..'
 alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
 
 # Show help for commands
-function show-help() {
+show-help() {
     local main_branch=$(gitmain)
     local current_branch=$(current_branch)
 
