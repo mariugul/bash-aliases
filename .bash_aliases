@@ -177,7 +177,33 @@ alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
-alias gitcleanup='git fetch --prune && git branch -vv | grep ": gone]" | awk "{print \$1}" | xargs -r git branch -D'
+function gbd() {
+    check_git_repo || return 1
+
+    local branches=($(git branch --format='%(refname:short)'))
+    local current_branch=$(current_branch)
+    echo "Available branches:"
+    for i in "${!branches[@]}"; do
+        if [ "${branches[$i]}" = "$current_branch" ]; then
+            echo -e "  $i) \033[0;32m${branches[$i]}\033[0m"
+        else
+            echo "  $i) ${branches[$i]}"
+        fi
+    done
+    echo ""
+    read -p "Select a branch to delete: " branch_index
+    if [[ -z "${branches[$branch_index]}" ]]; then
+        echo "Invalid selection. Please try again."
+        return 1
+    fi
+    local branch_to_delete="${branches[$branch_index]}"
+    read -p "Are you sure you want to delete the branch '$branch_to_delete'? [y/N] " confirmation
+    if [[ "$confirmation" =~ ^[Yy]$ ]]; then
+        git branch -d "$branch_to_delete"
+    else
+        echo "Branch deletion cancelled."
+    fi
+}
 alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases &> /dev/null & )'
 
 # Github CLI
