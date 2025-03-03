@@ -245,6 +245,10 @@ alias ....='cd ../../..'
 alias .....='cd ../../../..'
 alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
 
+# Aliases for apt update and upgrade
+alias apt-update='sudo apt-get update'
+alias apt-upgrade='sudo apt-get upgrade -y'
+
 # Show help for commands
 show-help() {
     local main_branch=$(gitmain)
@@ -263,6 +267,8 @@ show-help() {
     echo "  sourcebashrc    : apply changes to .bashrc file"
     echo "  upgrade-aliases : upgrade bash aliases. Add --dev to install local version of the bash-aliases file."
     echo "  open-alias-repo : open the bash-aliases GitHub repository in the default web browser"
+    echo "  apt-update      : sudo apt-get update"
+    echo "  apt-upgrade     : sudo apt-get upgrade"
     echo ""
     echo "Git:"
     echo "  gri             : git rebase -i"
