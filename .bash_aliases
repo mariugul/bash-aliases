@@ -99,11 +99,6 @@ grm() {
 
     git rebase "$main_branch"
 }
-grm() {
-    check_git_repo || return 1
-
-    git rebase $(gitmain)
-}
 alias gs='git status'
 alias gl='git log'
 alias glo='git log --oneline --graph --decorate'
