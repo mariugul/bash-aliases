@@ -29,6 +29,27 @@ current_branch() {
     git branch --show-current
 }
 
+is_upstream_branch() {
+    check_git_repo || return 1
+
+    local current_branch=$(current_branch)
+    local upstream_branch=$(git rev-parse --abbrev-ref "$current_branch"@{upstream} 2> /dev/null)
+
+    if [ -z "$upstream_branch" ]; then
+        echo "The branch '$current_branch' is not tracking any upstream branch."
+        read -p "Do you want to set the upstream branch now? [y/N] " set_upstream
+        if [[ "$set_upstream" =~ ^[Yy]$ ]]; then
+            gpsupstream
+        else
+            echo "Skipped setting upstream branch."
+        fi
+        return 1
+    else
+        echo "The branch '$current_branch' is tracking the upstream branch '$upstream_branch'."
+        return 0
+    fi
+}
+
 declare -A MAIN_BRANCHES
 
 gitmain() {
@@ -158,6 +179,7 @@ gswm(){
     check_git_repo || return 1
 
     local switch_output=$(git switch $(gitmain))
+    is_upstream_branch
     check_and_pull "$switch_output"
 }
 
@@ -186,9 +208,10 @@ gsw() {
         local switch_output=$(git switch "$1")
     fi
 
+    is_upstream_branch
     check_and_pull "$switch_output"
 }
-alias gsw-='git switch -'
+alias gsw-='git switch - && is_upstream_branch'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
