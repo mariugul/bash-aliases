@@ -138,10 +138,9 @@ gfo() {
     git fetch origin $(gitmain):$(gitmain)
 }
 alias gswc='git switch -c'
-gswm(){
-    check_git_repo || return 1
 
-    local switch_output=$(git switch $(gitmain))
+check_and_pull() {
+    local switch_output="$1"
     echo "$switch_output"
     if echo "$switch_output" | grep -q "use \"git pull\" to update your local branch"; then
         read -p "Your branch is behind. Do you want to run 'git pull'? [y/N] [r] (for rebase) " confirm_pull
@@ -154,6 +153,14 @@ gswm(){
         fi
     fi
 }
+
+gswm(){
+    check_git_repo || return 1
+
+    local switch_output=$(git switch $(gitmain))
+    check_and_pull "$switch_output"
+}
+
 gsw() {
     check_git_repo || return 1
 
@@ -174,10 +181,12 @@ gsw() {
             echo "Invalid selection. Please try again."
             return 1
         fi
-        git switch "${branches[$branch_index]}"
+        local switch_output=$(git switch "${branches[$branch_index]}")
     else
-        git switch "$1"
+        local switch_output=$(git switch "$1")
     fi
+
+    check_and_pull "$switch_output"
 }
 alias gsw-='git switch -'
 alias gcnoverify='git commit --no-verify'
