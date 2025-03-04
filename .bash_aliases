@@ -141,7 +141,18 @@ alias gswc='git switch -c'
 gswm(){
     check_git_repo || return 1
 
-    git switch $(gitmain)
+    local switch_output=$(git switch $(gitmain))
+    echo "$switch_output"
+    if echo "$switch_output" | grep -q "use \"git pull\" to update your local branch"; then
+        read -p "Your branch is behind. Do you want to run 'git pull'? [y/N] [r] (for rebase) " confirm_pull
+        if [[ "$confirm_pull" =~ ^[Yy]$ ]]; then
+            git pull
+        elif [[ "$confirm_pull" =~ ^[Yy][Rr]$ ]]; then
+            git pull --rebase
+        else
+            echo "Skipped 'git pull'."
+        fi
+    fi
 }
 gsw() {
     check_git_repo || return 1
