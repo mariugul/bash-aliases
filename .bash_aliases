@@ -162,14 +162,17 @@ alias gswc='git switch -c'
 
 check_and_pull() {
     local switch_output="$1"
-    if [ -n "$switch_output" ]; then
+    local print_output="$2"
+    if [ -n "$switch_output" ] && [ "$print_output" = true ]; then
         echo "$switch_output"
     fi
     if echo "$switch_output" | grep -q "use \"git pull\" to update your local branch"; then
-        read -p "Your branch is behind. Do you want to run 'git pull'? [y/N] [r]ebase: " confirm_pull
+        local behind_commits=$(echo "$switch_output" | grep -oP '(?<=by )\d+(?= commits)')
+        echo "Your branch is behind by $behind_commits commits."
+        read -p "Do you want to run 'git pull'? [y/N] [r]ebase: " confirm_pull
         if [[ "$confirm_pull" =~ ^[Yy]$ ]]; then
             git pull
-        elif [[ "$confirm_pull" =~ ^[Yy][Rr]$ ]]; then
+        elif [[ "$confirm_pull" =~ ^[Rr]$ ]]; then
             git pull --rebase
         else
             echo "Skipped 'git pull'."
@@ -182,7 +185,7 @@ gswm(){
 
     local switch_output=$(git switch $(gitmain))
     is_upstream_branch
-    check_and_pull "$switch_output"
+    check_and_pull "$switch_output" true
 }
 
 gsw() {
@@ -211,7 +214,7 @@ gsw() {
     fi
 
     is_upstream_branch
-    check_and_pull "$switch_output"
+    check_and_pull "$switch_output" true
 }
 alias gsw-='git switch - && is_upstream_branch'
 alias gcnoverify='git commit --no-verify'
@@ -363,7 +366,7 @@ show-help() {
 
 # Check if the shell is in a git repository and print the current branch
 if is_git_repo; then
-    echo -e "Checked out on branch: \033[01;36m$(current_branch)\033[00m"
-    git_status=$(git status > /dev/null 2>&1)
-    check_and_pull "$git_status"
+    echo -e "Checked out on \033[01;36m$(current_branch)\033[00m in repo \033[01;36m$(current_repo)\033[00m"
+    git_status=$(git status)
+    check_and_pull "$git_status" false
 fi
