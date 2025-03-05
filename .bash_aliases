@@ -128,7 +128,15 @@ alias gbo='printf "Current Branch -> \033[01;36m$(parse_git_branch)\033[00m\\n"'
 alias gco='git checkout'
 alias gc='git commit -m'
 alias gca='git add . && git commit -m'
-alias gps='git push'
+
+gps() {
+    check_git_repo || return 1
+    # Handles the case where you push on a branch that is not upstream. You will be asked to set the upstream branch.
+    if is_upstream_branch | grep -q "is tracking the upstream branch"; then
+        git push
+    fi
+}
+
 gpsupstream() {
     check_git_repo || return 1
 
