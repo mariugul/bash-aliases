@@ -162,9 +162,11 @@ alias gswc='git switch -c'
 
 check_and_pull() {
     local switch_output="$1"
-    echo "$switch_output"
+    if [ -n "$switch_output" ]; then
+        echo "$switch_output"
+    fi
     if echo "$switch_output" | grep -q "use \"git pull\" to update your local branch"; then
-        read -p "Your branch is behind. Do you want to run 'git pull'? [y/N] [r] (for rebase) " confirm_pull
+        read -p "Your branch is behind. Do you want to run 'git pull'? [y/N] [r]ebase: " confirm_pull
         if [[ "$confirm_pull" =~ ^[Yy]$ ]]; then
             git pull
         elif [[ "$confirm_pull" =~ ^[Yy][Rr]$ ]]; then
