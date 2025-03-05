@@ -131,10 +131,15 @@ alias gca='git add . && git commit -m'
 
 gps() {
     check_git_repo || return 1
-    # Handles the case where you push on a branch that is not upstream. You will be asked to set the upstream branch.
-    if is_upstream_branch | grep -q "is tracking the upstream branch"; then
-        git push
+    local git_push=$(git push 2>&1)
+
+    if echo "$git_push" | grep -q "fatal: The current branch"; then
+        echo -e "The current branch is not tracking any remote branch.\n"
+        gpsupstream
+        return
     fi
+
+    echo "$git_push"
 }
 
 gpsupstream() {
@@ -145,7 +150,9 @@ gpsupstream() {
         local upstream_branch=$(echo "$branches" | head -n 1)
     else
         echo "Available upstream branches:"
-        echo "$branches"
+        for branch in $branches; do
+            echo " - $branch"
+        done
         read -p "Enter the upstream branch to set: " upstream_branch
     fi
 
