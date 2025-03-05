@@ -358,3 +358,8 @@ show-help() {
     echo "  gc-release-as   : create a release commit with a specified version"
     echo "  parse_git_branch: parse and display the current git branch"
 }
+
+# Check if the shell is in a git repository and print the current branch
+if is_git_repo; then
+    echo -e "Checked out on branch: \033[01;36m$(current_branch)\033[00m"
+fi
