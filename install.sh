@@ -10,13 +10,13 @@ echo $dev_mode
 
 backup_and_replace() {
     cp "$TARGET" "$TARGET.bak"
-    echo "Backup of existing .bash_aliases created at $TARGET.bak"
+    echo " - Backup of existing .bash_aliases created at $TARGET.bak"
     if [ "$dev_mode" == "--dev" ] || [ "$1" == "r" ]; then
         cp "$LOCAL_FILE" "$TARGET"
-        echo "Replaced existing .bash_aliases with the local one."
+        echo " - Replaced existing .bash_aliases with the local one."
     else
         curl -sSLo "$TARGET" "$URL"
-        echo "Replaced existing .bash_aliases with the new one."
+        echo " - Replaced existing .bash_aliases with the new one."
     fi
 }
 
@@ -44,7 +44,7 @@ echo "Installing bash aliases..."
 
 # Backup existing .bash_aliases if it exists
 if [ -f "$TARGET" ]; then
-    echo "A .bash_aliases file already exists."
+    echo -e "\nA .bash_aliases file already exists."
     read -p "Do you want to (a)ppend to it or (r)eplace it? " choice
     case "$choice" in
         a|A)
@@ -62,6 +62,6 @@ else
     download_new "$1"
 fi
 
-echo "Bash aliases installed!"
+echo -e "\nBash aliases installed!"
 # Apply changes
 source "$HOME/.bashrc"
