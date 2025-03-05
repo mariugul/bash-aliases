@@ -235,19 +235,29 @@ alias gsw-='git switch - && is_upstream_branch'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
+
+git_remotes() {
+    git remote -v | awk '{print $1}' | uniq
+}
+
+gone_branches() {
+    git branch -vv | awk '/\[.*\/[^:]+: gone\]/ { match($0, /\[.*\/([^:]+): gone\]/, arr); print arr[1] }' | tr '\n' ' '
+}
+
 gitcleanup() {
     check_git_repo || return 1
 
+    echo "Fetching and pruning remote branches..."
     git fetch --prune
-    local branches_to_delete=$(git branch -vv | grep ": gone]" | awk '{print $1}')
-    if [ -z "$branches_to_delete" ]; then
+
+    if [ -z "$(gone_branches)" ]; then
         echo "No branches to clean up."
-    else
-        echo "Cleaning up the following branches:"
-        echo "$branches_to_delete"
-        echo "$branches_to_delete" | xargs -r git branch -D
+        return
     fi
+
+    git branch --delete --force $branches_to_delete
 }
+
 gbd() {
     check_git_repo || return 1
 
