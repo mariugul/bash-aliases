@@ -50,7 +50,14 @@ is_upstream_branch() {
     fi
 }
 
-declare -A MAIN_BRANCHES
+MAIN_BRANCHES_FILE="/tmp/main_branches"
+
+# Load MAIN_BRANCHES from file if it exists
+if [ -f "$MAIN_BRANCHES_FILE" ]; then
+    source "$MAIN_BRANCHES_FILE"
+else
+    declare -A MAIN_BRANCHES
+fi
 
 gitmain() {
     check_git_repo || return 1
@@ -63,6 +70,8 @@ gitmain() {
 
     if [ -z "${MAIN_BRANCHES[$repo]}" ]; then
         MAIN_BRANCHES[$repo]=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+        # Save MAIN_BRANCHES to file
+        declare -p MAIN_BRANCHES > "$MAIN_BRANCHES_FILE"
     fi
     echo "${MAIN_BRANCHES[$repo]}"
 }
