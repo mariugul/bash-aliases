@@ -244,6 +244,15 @@ gone_branches() {
     git branch -vv | awk '/\[.*\/[^:]+: gone\]/ { match($0, /\[.*\/([^:]+): gone\]/, arr); print arr[1] }' | tr '\n' ' '
 }
 
+
+git_first_commit() {
+    # Finds the first commit on the current branch
+    check_git_repo || return 1
+
+    local branch=$(current_branch)
+    git rev-list --max-parents=0 HEAD
+}
+
 gitcleanup() {
     check_git_repo || return 1
 
@@ -387,6 +396,7 @@ show-help() {
     echo "  commits_on_branch : get the number of commits on the current branch"
     echo "  gc-release-as   : create a release commit with a specified version"
     echo "  parse_git_branch: parse and display the current git branch"
+    echo "  git_first_commit: get the first commit of the current branch"
 }
 
 # Check if the shell is in a git repository and print the current branch
