@@ -130,8 +130,16 @@ grm() {
     git rebase "$main_branch"
 }
 alias gs='git status'
-alias gl='git log'
+alias gl='git log --stat'
+glb() {
+    # Show the git log for the current branch
+    git log --first-parent $(git_first_commit)..HEAD --decorate --graph --stat
+}
 alias glo='git log --oneline --graph --decorate'
+glob() {
+    # Show the git log for the current branch
+    git log --oneline --first-parent $(git_first_commit)..HEAD
+}
 alias gb='git branch'
 alias gbo='printf "Current Branch -> \033[01;36m$(parse_git_branch)\033[00m\\n"'
 alias gco='git checkout'
@@ -365,6 +373,8 @@ show-help() {
     echo "  gs              : git status"
     echo "  gl              : git log"
     echo "  glo             : git log --oneline --graph --decorate"
+    echo "  glob            : git log --oneline for commits on the current branch"
+    echo "  glb             : git log for commits on the current branch"
     echo "  gb              : git branch"
     echo "  gbd             : Delete a local branch from the list"
     echo "  gbo             : show current branch"
