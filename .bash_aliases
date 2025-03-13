@@ -248,9 +248,7 @@ gone_branches() {
 git_first_commit() {
     # Finds the first commit on the current branch
     check_git_repo || return 1
-
-    local branch=$(current_branch)
-    git rev-list --max-parents=0 HEAD
+    git merge-base HEAD $(gitmain)
 }
 
 gitcleanup() {
