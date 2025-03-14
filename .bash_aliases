@@ -258,7 +258,7 @@ git_remotes() {
 }
 
 gone_branches() {
-    git branch -vv | awk '/\[.*\/[^:]+: gone\]/ { match($0, /\[.*\/([^:]+): gone\]/, arr); print arr[1] }' | tr '\n' ' '
+    git branch -vv | awk '/\[.*\/[^:]+: gone\]/ { match($0, /\[.*\/([a-z]+\/[^:]+): gone\]/, arr); print arr[1] }' | tr '\n' ' '
 }
 
 
@@ -274,11 +274,13 @@ gitcleanup() {
     echo "Fetching and pruning remote branches..."
     git fetch --prune
 
-    if [ -z "$(gone_branches)" ]; then
+    local branches_to_delete=$(gone_branches)
+    if [ -z "$branches_to_delete" ]; then
         echo "No branches to clean up."
         return
     fi
 
+    echo "Deleting branches:"
     git branch --delete --force $branches_to_delete
 }
 
