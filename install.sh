@@ -4,9 +4,36 @@
 TARGET="$HOME/.bash_aliases"
 URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases"
 LOCAL_FILE="./.bash_aliases"
+
+show_help() {
+    echo "Bash Aliases Installer"
+    echo ""
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "This script installs bash aliases to ~/.bash_aliases"
+    echo ""
+    echo "Options:"
+    echo "  --dev     Use local .bash_aliases file instead of downloading from repository"
+    echo "  --help    Display this help message and exit"
+    echo ""
+    echo "If ~/.bash_aliases already exists, you will be prompted to either:"
+    echo "  - (a)ppend new aliases to the existing file"
+    echo "  - (r)eplace the existing file (with backup)"
+    echo ""
+    echo "Examples:"
+    echo "  $0              # Install from repository"
+    echo "  $0 --dev        # Install from local file"
+    echo "  $0 --help       # Show this help"
+}
+
+# Check for help flag first
+if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+    show_help
+    exit 0
+fi
+
 # add input for local file
 dev_mode=$1
-echo $dev_mode
 
 backup_and_replace() {
     cp "$TARGET" "$TARGET.bak"
