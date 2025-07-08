@@ -271,8 +271,8 @@ git_first_commit() {
 gitcleanup() {
     check_git_repo || return 1
 
-    echo "Fetching and pruning remote branches..."
-    git fetch --prune
+    echo "Fetching and pruning from all remotes..."         
+    git fetch --all --prune
 
     local branches_to_delete=$(gone_branches)
     if [ -z "$branches_to_delete" ]; then
