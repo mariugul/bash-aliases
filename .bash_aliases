@@ -277,6 +277,7 @@ gitcleanup() {
     git fetch --all --prune
 
     local branches_to_delete=$(gone_branches)
+    branches_to_delete="$(echo -n "$branches_to_delete" | xargs)"  # trims whitespace
     if [ -z "$branches_to_delete" ]; then
         echo "No branches to clean up."
         return
