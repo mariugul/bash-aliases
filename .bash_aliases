@@ -224,7 +224,9 @@ gsw() {
     check_git_repo || return 1
 
     if [ -z "$1" ]; then
-        local branches=($(git branch --format='%(refname:short)'))
+        local all_branches=( $(git branch --format='%(refname:short)') )
+        # Use helper to sort branches
+        read -a branches <<< "$(sorted_branches_with_main_first "${all_branches[@]}")"
         local current_branch=$(current_branch)
         echo "Available branches:"
         for i in "${!branches[@]}"; do
@@ -287,7 +289,9 @@ gitcleanup() {
 gbd() {
     check_git_repo || return 1
 
-    local branches=($(git branch --format='%(refname:short)'))
+    local all_branches=( $(git branch --format='%(refname:short)') )
+    # Use helper to sort branches
+    read -a branches <<< "$(sorted_branches_with_main_first "${all_branches[@]}")"
     local current_branch=$(current_branch)
     echo "Available branches:"
     for i in "${!branches[@]}"; do
@@ -417,6 +421,31 @@ show-help() {
     echo "  gc-release-as   : create a release commit with a specified version"
     echo "  parse_git_branch: parse and display the current git branch"
     echo "  git_first_commit: get the first commit of the current branch"
+}
+
+# Returns an array: main/master at index 0 (if present), rest sorted alphabetically
+sorted_branches_with_main_first() {
+    local all_branches=( "$@" )
+    local main_branch=""
+    # Find main or master
+    for b in "main" "master"; do
+        for i in "${!all_branches[@]}"; do
+            if [ "${all_branches[$i]}" = "$b" ]; then
+                main_branch="$b"
+                unset 'all_branches[$i]'
+                break 2
+            fi
+        done
+    done
+    # Sort the rest
+    IFS=$'\n' sorted_branches=( $(printf "%s\n" "${all_branches[@]}" | sort) )
+    unset IFS
+    # Prepend main/master if found
+    if [ -n "$main_branch" ]; then
+        echo "$main_branch" "${sorted_branches[@]}"
+    else
+        echo "${sorted_branches[@]}"
+    fi
 }
 
 # Check if the shell is in a git repository and print the current branch
