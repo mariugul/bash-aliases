@@ -318,6 +318,25 @@ gbd() {
 }
 alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases &> /dev/null & )'
 
+sync-fork() {
+    check_git_repo || return 1
+
+    local main_branch=$(gitmain)
+    if [ -z "$main_branch" ]; then
+        echo "Failed to determine the main branch."
+        return 1
+    fi
+
+    echo "Fetching upstream..."
+    git fetch upstream
+
+    echo "Rebasing upstream/$main_branch onto $main_branch..."
+    git rebase upstream/$main_branch $main_branch
+
+    echo "Force pushing $main_branch to origin..."
+    git push origin $main_branch --force
+}
+
 # Github CLI
 # create PR on current branch
 prcreate() {
@@ -406,6 +425,7 @@ show-help() {
     echo "  commits_on_branch : get the number of commits on the current branch"
     echo "  gitundolast     : git reset --soft HEAD~1"
     echo "  gitcleanup      : git fetch --prune && git branch -vv | grep ': gone]' | awk '{print \$1}' | xargs -r git branch -D"
+    echo "  sync-fork       : sync a forked repository with the upstream repository"
     echo ""
     echo "GitHub CLI:"
     echo "  prcreate        : gh pr create --base $main_branch --head $$current_branch"
