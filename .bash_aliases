@@ -361,6 +361,7 @@ prcheckout() {
 alias bash-rc='code ~/.bashrc'
 alias bash-aliases='code ~/.bash_aliases'
 alias sourcebashrc='source ~/.bashrc && echo "Bash aliases reloaded."'
+alias sourcevenv='source .venv/bin/activate'
 alias c='clear'
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -370,7 +371,7 @@ alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugu
 
 # Aliases for apt update and upgrade
 alias apt-update='sudo apt-get update'
-alias apt-upgrade='sudo apt-get upgrade -y'
+alias apt-upgrade='(sudo apt-get update && sudo apt-get upgrade -y)'
 alias pipupgrade='pip install --upgrade pip'
 alias uvr='uv run'
 alias uvi='uv run invoke'
@@ -390,6 +391,7 @@ show-help() {
     echo "  bash-rc         : open .bashrc file in VS Code"
     echo "  bash-aliases    : open .bash_aliases file in VS Code"
     echo "  sourcebashrc    : apply changes to .bashrc file"
+    echo "  sourcevenv      : source .venv/bin/activate"
     echo "  upgrade-aliases : upgrade bash aliases. Add --dev to install local version of the bash-aliases file."
     echo "  open-alias-repo : open the bash-aliases GitHub repository in the default web browser"
     echo "  apt-update      : sudo apt-get update"
