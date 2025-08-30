@@ -372,6 +372,8 @@ alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugu
 alias apt-update='sudo apt-get update'
 alias apt-upgrade='sudo apt-get upgrade -y'
 alias pipupgrade='pip install --upgrade pip'
+alias uvr='uv run'
+alias uvi='uv run invoke'
 # Show help for commands
 show-help() {
     local main_branch=$(gitmain)
@@ -393,6 +395,8 @@ show-help() {
     echo "  apt-update      : sudo apt-get update"
     echo "  apt-upgrade     : sudo apt-get upgrade"
     echo "  pipupgrade      : upgrade pip"
+    echo "  uvr             : uv run"
+    echo "  uvi             : uv run invoke"
     echo ""
     echo "Git:"
     echo "  gri             : git rebase -i"
