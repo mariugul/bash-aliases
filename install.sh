@@ -128,5 +128,4 @@ else
 fi
 
 echo -e "\nBash aliases installed!"
-# Apply changes
-source "$HOME/.bashrc"
+echo -e "\nPlease run 'source ~/.bashrc' to apply changes to your current session."

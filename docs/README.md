@@ -7,7 +7,7 @@ This repository contains a collection of useful bash aliases and functions to en
 To install the bash aliases, run the following command in your terminal:
 
 ```bash
-bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)
+bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh) && source ~/.bashrc
 ```
 
 ## Usage
