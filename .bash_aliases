@@ -21,6 +21,7 @@ alias_add() {
         source ~/.bash_aliases
     else
         echo "Alias $1 already exists."
+        return 0
     fi
     source ~/.bash_aliases
 }
@@ -146,9 +147,10 @@ alias gco='git checkout'
 alias gc='git commit -m'
 alias gca='git add . && git commit -m'
 
-gps() {
+function gps() {
     check_git_repo || return 1
-    local git_push=$(git push 2>&1)
+    local git_push
+    git_push=$(git push 2>&1)
 
     if echo "$git_push" | grep -q "fatal: The current branch"; then
         echo -e "The current branch is not tracking any remote branch.\n"
@@ -360,7 +362,7 @@ prcheckout() {
 # Aliases
 alias bash-rc='code ~/.bashrc'
 alias bash-aliases='code ~/.bash_aliases'
-alias sourcebashrc='source ~/.bashrc && echo "Bash aliases reloaded."'
+alias sourcebashrc='source ~/.bashrc && echo "Bash aliases reloaded." && show-help'
 alias sourcevenv='source .venv/bin/activate'
 alias c='clear'
 alias ..='cd ..'
@@ -411,7 +413,7 @@ fi
 # Additional aliases
 alias gf='git fetch'
 alias gfa='git fetch --all'
-alias myip='curl ifconfig.me'
+alias myip='curl ifconfig.me && echo ""'
 mkcd() { mkdir -p "$1" && cd "$1"; }
 alias diskspace='df -h'
 alias dirsize='du -sh'
@@ -446,7 +448,6 @@ show-help() {
     echo "  mkcd            : Create and navigate to a new directory"
     echo "  diskspace       : Check disk space usage"
     echo "  dirsize         : Check the size of a directory"
-}
     echo ""
     echo "Git Commands:"
     echo "  gri             : Start an interactive rebase"
@@ -474,3 +475,4 @@ show-help() {
     echo "  prcreate        : Create a pull request with the base branch set to '$main_branch' and the head branch set to the current branch."
     echo "  prcheckout      : Checkout a GitHub pull request by number."
     echo ""
+}
