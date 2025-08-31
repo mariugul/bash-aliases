@@ -408,6 +408,13 @@ if is_git_repo; then
     check_and_pull "$git_status" false
 fi
 
+# Additional aliases
+alias gf='git fetch'
+alias gfa='git fetch --all'
+alias myip='curl ifconfig.me'
+mkcd() { mkdir -p "$1" && cd "$1"; }
+alias diskspace='df -h'
+alias dirsize='du -sh'
 
 # Show help for commands
 show-help() {
@@ -433,6 +440,13 @@ show-help() {
     echo "  pipupgrade      : Upgrade pip to the latest version"
     echo "  uvr             : Run Astral (uv run)"
     echo "  uvi             : Invoke Astral (uv run invoke)"
+    echo "  alias_add       : Add a new alias."
+    echo "                    Usage: alias_add <alias_name> <command>"
+    echo "  myip            : Display your public IP address"
+    echo "  mkcd            : Create and navigate to a new directory"
+    echo "  diskspace       : Check disk space usage"
+    echo "  dirsize         : Check the size of a directory"
+}
     echo ""
     echo "Git Commands:"
     echo "  gri             : Start an interactive rebase"
@@ -448,20 +462,15 @@ show-help() {
     echo "  gco             : Checkout a branch"
     echo "  gc              : Commit changes with a message"
     echo "  gca             : Add all changes and commit with a message"
-    echo ""
-    echo "GitHub CLI:"
-    echo "  prcreate        : Create a pull request with the base branch set to '$main_branch' and the head branch set to the current branch."
-    echo "  prcheckout      : Checkout a GitHub pull request by number."
-    echo ""
-    echo "Methods:"
+    echo "  gf              : Fetch from the remote repository"
+    echo "  gfa             : Fetch from all remote repositories"
     echo "  current_repo    : Get the name of the current git repository."
     echo "  is_git_repo     : Check if the current directory is a git repository."
-    echo "  alias_add       : Add a new alias."
-    echo "                    Usage: alias_add <alias_name> <command>"
     echo "  current_branch  : Get the name of the current git branch."
     echo "  gitmain         : Get the '$main_branch' branch of the repository."
     echo "  commits_on_branch : Get the number of commits on the current branch."
     echo "  gc-release-as   : Create a release commit with a specified version."
-    echo "  parse_git_branch: Parse and display the current git branch."
     echo "  git_first_commit: Get the first commit of the current branch."
-}
+    echo "  prcreate        : Create a pull request with the base branch set to '$main_branch' and the head branch set to the current branch."
+    echo "  prcheckout      : Checkout a GitHub pull request by number."
+    echo ""
