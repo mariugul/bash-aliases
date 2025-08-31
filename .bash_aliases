@@ -375,6 +375,40 @@ alias apt-upgrade='(sudo apt-get update && sudo apt-get upgrade -y)'
 alias pipupgrade='pip install --upgrade pip'
 alias uvr='uv run'
 alias uvi='uv run invoke'
+
+# Returns an array: main/master at index 0 (if present), rest sorted alphabetically
+sorted_branches_with_main_first() {
+    local all_branches=( "$@" )
+    local main_branch=""
+    # Find main or master
+    for b in "main" "master"; do
+        for i in "${!all_branches[@]}"; do
+            if [ "${all_branches[$i]}" = "$b" ]; then
+                main_branch="$b"
+                unset 'all_branches[$i]'
+                break 2
+            fi
+        done
+    done
+    # Sort the rest
+    IFS=$'\n' sorted_branches=( $(printf "%s\n" "${all_branches[@]}" | sort) )
+    unset IFS
+    # Prepend main/master if found
+    if [ -n "$main_branch" ]; then
+        echo "$main_branch" "${sorted_branches[@]}"
+    else
+        echo "${sorted_branches[@]}"
+    fi
+}
+
+# Check if the shell is in a git repository and print the current branch
+if is_git_repo; then
+    echo -e "Checked out on \033[01;36m$(current_branch)\033[00m in repo \033[01;36m$(current_repo)\033[00m"
+    git_status=$(git status)
+    check_and_pull "$git_status" false
+fi
+
+
 # Show help for commands
 show-help() {
     local main_branch=$(gitmain)
@@ -423,6 +457,7 @@ show-help() {
     echo "  current_repo    : Get the name of the current git repository."
     echo "  is_git_repo     : Check if the current directory is a git repository."
     echo "  alias_add       : Add a new alias."
+    echo "                    Usage: alias_add <alias_name> <command>"
     echo "  current_branch  : Get the name of the current git branch."
     echo "  gitmain         : Get the '$main_branch' branch of the repository."
     echo "  commits_on_branch : Get the number of commits on the current branch."
@@ -430,35 +465,3 @@ show-help() {
     echo "  parse_git_branch: Parse and display the current git branch."
     echo "  git_first_commit: Get the first commit of the current branch."
 }
-
-# Returns an array: main/master at index 0 (if present), rest sorted alphabetically
-sorted_branches_with_main_first() {
-    local all_branches=( "$@" )
-    local main_branch=""
-    # Find main or master
-    for b in "main" "master"; do
-        for i in "${!all_branches[@]}"; do
-            if [ "${all_branches[$i]}" = "$b" ]; then
-                main_branch="$b"
-                unset 'all_branches[$i]'
-                break 2
-            fi
-        done
-    done
-    # Sort the rest
-    IFS=$'\n' sorted_branches=( $(printf "%s\n" "${all_branches[@]}" | sort) )
-    unset IFS
-    # Prepend main/master if found
-    if [ -n "$main_branch" ]; then
-        echo "$main_branch" "${sorted_branches[@]}"
-    else
-        echo "${sorted_branches[@]}"
-    fi
-}
-
-# Check if the shell is in a git repository and print the current branch
-if is_git_repo; then
-    echo -e "Checked out on \033[01;36m$(current_branch)\033[00m in repo \033[01;36m$(current_repo)\033[00m"
-    git_status=$(git status)
-    check_and_pull "$git_status" false
-fi
