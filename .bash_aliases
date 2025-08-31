@@ -332,6 +332,7 @@ sync-fork() {
     if ! git remote get-url upstream &> /dev/null; then
         echo "Error: 'upstream' remote does not exist."
         echo "Please add it by running 'git remote add upstream https://github.com/original-repo-url.git'"
+        echo "It's expected that the upstream remote points to the original repository and the forked repository is added as 'origin'."
         return 1
     fi
 
