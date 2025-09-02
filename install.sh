@@ -1,16 +1,21 @@
 #!/bin/bash
 
-# Define target file
+# Define target files and directories
 TARGET="$HOME/.bash_aliases"
+TARGET_DIR="$HOME/.bash_aliases.d"
 URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases"
 LOCAL_FILE="./.bash_aliases"
+LOCAL_DIR="./.bash_aliases.d"
+
+# Module files to install
+MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh")
 
 show_help() {
     echo "Bash Aliases Installer"
     echo ""
     echo "Usage: $0 [OPTIONS]"
     echo ""
-    echo "This script installs bash aliases to ~/.bash_aliases"
+    echo "This script installs modular bash aliases to ~/.bash_aliases and ~/.bash_aliases.d/"
     echo ""
     echo "Options:"
     echo "  --dev       Use local .bash_aliases file instead of downloading from repository"
@@ -59,6 +64,34 @@ for arg in "$@"; do
     esac
 done
 
+install_modules() {
+    local dev_mode="$1"
+    
+    # Create the modules directory
+    mkdir -p "$TARGET_DIR"
+    
+    if [ "$dev_mode" == "--dev" ]; then
+        # Copy local modules
+        if [ -d "$LOCAL_DIR" ]; then
+            for module in "${MODULES[@]}"; do
+                if [ -f "$LOCAL_DIR/$module" ]; then
+                    cp "$LOCAL_DIR/$module" "$TARGET_DIR/$module"
+                    echo " - Installed module: $module"
+                fi
+            done
+        else
+            echo "Warning: Local module directory $LOCAL_DIR not found"
+        fi
+    else
+        # Download modules from repository
+        for module in "${MODULES[@]}"; do
+            local module_url="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases.d/$module"
+            curl -sSLo "$TARGET_DIR/$module" "$module_url"
+            echo " - Downloaded module: $module"
+        done
+    fi
+}
+
 backup_and_replace() {
     cp "$TARGET" "$TARGET.bak"
     echo " - Backup of existing .bash_aliases created at $TARGET.bak"
@@ -69,6 +102,9 @@ backup_and_replace() {
         curl -sSLo "$TARGET" "$URL"
         echo " - Replaced existing .bash_aliases with the new one."
     fi
+    
+    # Install modules
+    install_modules "$dev_mode"
 }
 
 append_to_existing() {
@@ -79,6 +115,9 @@ append_to_existing() {
         curl -sS "$URL" >> "$TARGET"
         echo "Appended new aliases to existing .bash_aliases."
     fi
+    
+    # Install modules (will create directory if needed)
+    install_modules "$1"
 }
 
 download_new() {
@@ -89,6 +128,9 @@ download_new() {
         curl -sSLo "$TARGET" "$URL"
         echo "Downloaded new .bash_aliases."
     fi
+    
+    # Install modules
+    install_modules "$1"
 }
 
 echo "Installing bash aliases..."
