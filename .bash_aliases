@@ -3,7 +3,7 @@
 # Detect the primary remote based on common conventions
 # Priority: upstream > origin > first available remote
 get-primary-remote() {
-    check_git_repo || return 1
+    check-git-repo || return 1
     
     local remotes=$(git remote)
     if [ -z "$remotes" ]; then
@@ -27,7 +27,7 @@ get-primary-remote() {
     echo "$remotes" | head -n 1
 }
 
-current_repo() {
+current-repo() {
     local primary_remote=$(get-primary-remote)
     if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
         return 1
@@ -35,18 +35,18 @@ current_repo() {
     git remote get-url "$primary_remote" 2> /dev/null | sed -n 's#.*/\([^.]*\)\.git#\1#p'
 }
 
-is_git_repo() {
+is-git-repo() {
     git rev-parse --is-inside-work-tree > /dev/null 2>&1
 }
 
-check_git_repo() {
-    if ! is_git_repo; then
+check-git-repo() {
+    if ! is-git-repo; then
         echo "Not a git repository."
         return 1
     fi
 }
 
-alias_add() {
+alias-add() {
     if ! grep -q "alias $1=" ~/.bash_aliases; then
         echo "alias $1='$2'" >> ~/.bash_aliases
         source ~/.bash_aliases
@@ -57,14 +57,14 @@ alias_add() {
     source ~/.bash_aliases
 }
 
-current_branch() {
+current-branch() {
     git branch --show-current
 }
 
-is_upstream_branch() {
-    check_git_repo || return 1
+is-upstream-branch() {
+    check-git-repo || return 1
 
-    local current_branch=$(current_branch)
+    local current_branch=$(current-branch)
     local upstream_branch=$(git rev-parse --abbrev-ref "$current_branch"@{upstream} 2> /dev/null)
 
     if [ -z "$upstream_branch" ]; then
@@ -92,9 +92,9 @@ else
 fi
 
 gitmain() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
-    local repo=$(current_repo)
+    local repo=$(current-repo)
     if [ -z "$repo" ]; then
         echo "Unable to determine repository name."
         return 1
@@ -132,10 +132,10 @@ gitmain() {
     echo "${MAIN_BRANCHES[$repo]}"
 }
 
-commits_on_branch() {
-    check_git_repo || return 1
+commits-on-branch() {
+    check-git-repo || return 1
 
-    local current=$(current_branch)
+    local current=$(current-branch)
     local main=$(gitmain)
     
     if [ -z "$current" ] || [ -z "$main" ]; then
@@ -161,17 +161,17 @@ commits_on_branch() {
 }
 
 gri() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     local main_branch=$(gitmain)
-    local current_branch=$(current_branch)
+    local current_branch=$(current-branch)
     if [ "$current_branch" = "$main_branch" ]; then
-        echo "You are on the main branch with $(commits_on_branch) commits."
+        echo "You are on the main branch with $(commits-on-branch) commits."
         echo "Rebasing and force pushing the main branch is dangerous."
         read -p "How many commits do you want to interactively rebase? " rebase_count
         git rebase -i HEAD~$rebase_count
     else
-        local commit_count=$(commits_on_branch)
+        local commit_count=$(commits-on-branch)
         if [ $? -ne 0 ]; then
             echo "Error: Unable to determine the number of commits on the branch."
             return 1
@@ -181,7 +181,7 @@ gri() {
 }
 
 gc-release-as() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     if [ -z "$1" ]; then
         echo "Usage: release_as <version>"
@@ -193,7 +193,7 @@ gc-release-as() {
 }
 
 grm() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     local main_branch=$(gitmain)
     if [ $? -ne 0 ]; then
@@ -207,12 +207,12 @@ alias gs='git status'
 alias gl='git log --stat'
 glb() {
     # Show the git log for the current branch
-    git log --first-parent $(git_first_commit)..HEAD --decorate --graph --stat
+    git log --first-parent $(git-first-commit)..HEAD --decorate --graph --stat
 }
 alias glo='git log --oneline --graph --decorate'
 glob() {
     # Show the git log for the current branch
-    git log --oneline --first-parent $(git_first_commit)..HEAD
+    git log --oneline --first-parent $(git-first-commit)..HEAD
 }
 alias gb='git branch'
 alias gbo='printf "Current Branch -> \033[01;36m$(parse_git_branch)\033[00m\\n"'
@@ -221,7 +221,7 @@ alias gc='git commit -m'
 alias gca='git add . && git commit -m'
 
 function gps() {
-    check_git_repo || return 1
+    check-git-repo || return 1
     local git_push
     git_push=$(git push 2>&1)
 
@@ -235,7 +235,7 @@ function gps() {
 }
 
 gpsupstream() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     local branches=$(git remote -v | awk '{print $1}' | uniq)
     if [ $(echo "$branches" | wc -l) -eq 1 ]; then
@@ -253,7 +253,7 @@ gpsupstream() {
         return 1
     fi
 
-    git push --set-upstream "$upstream_branch" $(current_branch)
+    git push --set-upstream "$upstream_branch" $(current-branch)
 }
 alias gpu='git pull'
 alias gpur='git pull --rebase'
@@ -261,7 +261,7 @@ alias gss='git stash save'
 alias gconfig='git config --global --edit'
 alias gpf='git push --force'
 gfo() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     local primary_remote=$(get-primary-remote)
     if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
@@ -273,7 +273,7 @@ gfo() {
 }
 alias gswc='git switch -c'
 
-check_and_pull() {
+check-and-pull() {
     local switch_output="$1"
     local print_output="$2"
     if [ -n "$switch_output" ] && [ "$print_output" = true ]; then
@@ -294,21 +294,21 @@ check_and_pull() {
 }
 
 gswm(){
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     local switch_output=$(git switch $(gitmain))
-    is_upstream_branch
-    check_and_pull "$switch_output" true
+    is-upstream-branch
+    check-and-pull "$switch_output" true
 }
 
 gsw() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     if [ -z "$1" ]; then
         local all_branches=( $(git branch --format='%(refname:short)') )
         # Use helper to sort branches
-        read -a branches <<< "$(sorted_branches_with_main_first "${all_branches[@]}")"
-        local current_branch=$(current_branch)
+        read -a branches <<< "$(sorted-branches-with-main-first "${all_branches[@]}")"
+        local current_branch=$(current-branch)
         echo "Available branches:"
         for i in "${!branches[@]}"; do
             if [ "${branches[$i]}" = "$current_branch" ]; then
@@ -328,36 +328,36 @@ gsw() {
         local switch_output=$(git switch "$1")
     fi
 
-    is_upstream_branch
-    check_and_pull "$switch_output" true
+    is-upstream-branch
+    check-and-pull "$switch_output" true
 }
-alias gsw-='git switch - && is_upstream_branch'
+alias gsw-='git switch - && is-upstream-branch'
 alias gcnoverify='git commit --no-verify'
 alias gcempty='git commit --allow-empty -m "chore(drop): trigger CI (DROP ME)"'
 alias gitundolast='git reset --soft HEAD~1'
 
-git_remotes() {
+git-remotes() {
     git remote -v | awk '{print $1}' | uniq
 }
 
-gone_branches() {
+gone-branches() {
     git branch -vv | awk '/\[.*\/[^:]+: gone\]/ { match($0, /\[.*\/([a-z]+\/[^:]+): gone\]/, arr); print arr[1] }' | tr '\n' ' '
 }
 
 
-git_first_commit() {
+git-first-commit() {
     # Finds the first commit on the current branch
-    check_git_repo || return 1
+    check-git-repo || return 1
     git merge-base HEAD $(gitmain)
 }
 
 gitcleanup() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     echo "Fetching and pruning from all remotes..."         
     git fetch --all --prune
 
-    local branches_to_delete=$(gone_branches)
+    local branches_to_delete=$(gone-branches)
     branches_to_delete="$(echo -n "$branches_to_delete" | xargs)"  # trims whitespace
     if [ -z "$branches_to_delete" ]; then
         echo "No branches to clean up."
@@ -369,12 +369,12 @@ gitcleanup() {
 }
 
 gbd() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     local all_branches=( $(git branch --format='%(refname:short)') )
     # Use helper to sort branches
-    read -a branches <<< "$(sorted_branches_with_main_first "${all_branches[@]}")"
-    local current_branch=$(current_branch)
+    read -a branches <<< "$(sorted-branches-with-main-first "${all_branches[@]}")"
+    local current_branch=$(current-branch)
     echo "Available branches:"
     for i in "${!branches[@]}"; do
         if [ "${branches[$i]}" = "$current_branch" ]; then
@@ -400,7 +400,7 @@ gbd() {
 alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases &> /dev/null & )'
 
 sync-fork() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     local main_branch=$(gitmain)
     if [ -z "$main_branch" ]; then
@@ -436,13 +436,13 @@ sync-fork() {
 # Github CLI
 # create PR on current branch
 prcreate() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
-    gh pr create --base $(gitmain) --head $(current_branch)
+    gh pr create --base $(gitmain) --head $(current-branch)
 }
 alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
 prcheckout() {
-    check_git_repo || return 1
+    check-git-repo || return 1
 
     # Checks out a GitHub PR when opened from a forked repo
     read -p "Enter the PR number to checkout: " pr_number
@@ -473,7 +473,7 @@ alias uvr='uv run'
 alias uvi='uv run invoke'
 
 # Returns an array: main/master at index 0 (if present), rest sorted alphabetically
-sorted_branches_with_main_first() {
+sorted-branches-with-main-first() {
     local all_branches=( "$@" )
     local main_branch=""
     # Find main or master
@@ -498,10 +498,10 @@ sorted_branches_with_main_first() {
 }
 
 # Check if the shell is in a git repository and print the current branch
-if is_git_repo; then
-    echo -e "Checked out on \033[01;36m$(current_branch)\033[00m in repo \033[01;36m$(current_repo)\033[00m"
+if is-git-repo; then
+    echo -e "Checked out on \033[01;36m$(current-branch)\033[00m in repo \033[01;36m$(current-repo)\033[00m"
     git_status=$(git status)
-    check_and_pull "$git_status" false
+    check-and-pull "$git_status" false
 fi
 
 # Additional aliases
@@ -515,7 +515,7 @@ alias dirsize='du -sh'
 # Show help for commands
 show-help() {
     local main_branch=$(gitmain)
-    local current_branch=$(current_branch)
+    local current_branch=$(current-branch)
 
     echo "Available Commands:"
     echo ""
@@ -536,8 +536,8 @@ show-help() {
     echo "  pipupgrade      : Upgrade pip to the latest version"
     echo "  uvr             : Run Astral (uv run)"
     echo "  uvi             : Invoke Astral (uv run invoke)"
-    echo "  alias_add       : Add a new alias."
-    echo "                    Usage: alias_add <alias_name> <command>"
+    echo "  alias-add       : Add a new alias."
+    echo "                    Usage: alias-add <alias_name> <command>"
     echo "  myip            : Display your public IP address"
     echo "  mkcd            : Create and navigate to a new directory"
     echo "  diskspace       : Check disk space usage"
@@ -559,13 +559,13 @@ show-help() {
     echo "  gca             : Add all changes and commit with a message"
     echo "  gf              : Fetch from the remote repository"
     echo "  gfa             : Fetch from all remote repositories"
-    echo "  current_repo    : Get the name of the current git repository."
-    echo "  is_git_repo     : Check if the current directory is a git repository."
-    echo "  current_branch  : Get the name of the current git branch."
+    echo "  current-repo    : Get the name of the current git repository."
+    echo "  is-git-repo     : Check if the current directory is a git repository."
+    echo "  current-branch  : Get the name of the current git branch."
     echo "  gitmain         : Get the '$main_branch' branch of the repository."
-    echo "  commits_on_branch : Get the number of commits on the current branch."
+    echo "  commits-on-branch : Get the number of commits on the current branch."
     echo "  gc-release-as   : Create a release commit with a specified version."
-    echo "  git_first_commit: Get the first commit of the current branch."
+    echo "  git-first-commit: Get the first commit of the current branch."
     echo "  prcreate        : Create a pull request with the base branch set to '$main_branch' and the head branch set to the current branch."
     echo "  prcheckout      : Checkout a GitHub pull request by number."
     echo ""
