@@ -263,7 +263,13 @@ alias gpf='git push --force'
 gfo() {
     check_git_repo || return 1
 
-    git fetch origin $(gitmain):$(gitmain)
+    local primary_remote=$(get-primary-remote)
+    if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
+        echo "Unable to determine primary remote."
+        return 1
+    fi
+    
+    git fetch "$primary_remote" $(gitmain):$(gitmain)
 }
 alias gswc='git switch -c'
 
@@ -409,13 +415,21 @@ sync-fork() {
         return 1
     fi
 
+    # For sync-fork, we specifically want to push to origin (the fork)
+    # even if upstream is the primary remote for other operations
+    if ! git remote get-url origin &> /dev/null; then
+        echo "Error: 'origin' remote does not exist."
+        echo "For fork syncing, 'origin' should point to your fork."
+        return 1
+    fi
+
     echo "Fetching upstream..."
     git fetch upstream
 
     echo "Rebasing upstream/$main_branch onto $main_branch..."
     git rebase upstream/$main_branch $main_branch
 
-    echo "Force pushing $main_branch to origin..."
+    echo "Force pushing $main_branch to origin (your fork)..."
     git push origin $main_branch --force
 }
 
