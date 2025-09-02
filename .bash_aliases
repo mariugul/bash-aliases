@@ -1,7 +1,38 @@
 # Methods
 
+# Detect the primary remote based on common conventions
+# Priority: upstream > origin > first available remote
+get-primary-remote() {
+    check_git_repo || return 1
+    
+    local remotes=$(git remote)
+    if [ -z "$remotes" ]; then
+        echo "No remotes found in this repository."
+        return 1
+    fi
+    
+    # Check for upstream first (common in fork scenarios)
+    if echo "$remotes" | grep -q "^upstream$"; then
+        echo "upstream"
+        return 0
+    fi
+    
+    # Check for origin second (most common)
+    if echo "$remotes" | grep -q "^origin$"; then
+        echo "origin"
+        return 0
+    fi
+    
+    # Fall back to first available remote
+    echo "$remotes" | head -n 1
+}
+
 current_repo() {
-    git remote get-url origin 2> /dev/null | sed -n 's#.*/\([^.]*\)\.git#\1#p'
+    local primary_remote=$(get-primary-remote)
+    if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
+        return 1
+    fi
+    git remote get-url "$primary_remote" 2> /dev/null | sed -n 's#.*/\([^.]*\)\.git#\1#p'
 }
 
 is_git_repo() {
@@ -70,7 +101,31 @@ gitmain() {
     fi
 
     if [ -z "${MAIN_BRANCHES[$repo]}" ]; then
-        MAIN_BRANCHES[$repo]=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+        local primary_remote=$(get-primary-remote)
+        if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
+            echo "Unable to determine primary remote."
+            return 1
+        fi
+        
+        # Try to get the default branch from the remote
+        local main_branch=$(git remote show "$primary_remote" 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}')
+        
+        # If that fails, try common main branch names that exist locally
+        if [ -z "$main_branch" ] || [ "$main_branch" = "(unknown)" ]; then
+            for branch in main master develop; do
+                if git show-ref --verify --quiet "refs/heads/$branch"; then
+                    main_branch="$branch"
+                    break
+                fi
+            done
+        fi
+        
+        # If still no main branch found, default to 'main'
+        if [ -z "$main_branch" ]; then
+            main_branch="main"
+        fi
+        
+        MAIN_BRANCHES[$repo]="$main_branch"
         # Save MAIN_BRANCHES to file
         declare -p MAIN_BRANCHES > "$MAIN_BRANCHES_FILE"
     fi
@@ -80,10 +135,28 @@ gitmain() {
 commits_on_branch() {
     check_git_repo || return 1
 
-    if [ "$(current_branch)" = "$(gitmain)" ]; then
-        git rev-list --count $(gitmain)
+    local current=$(current_branch)
+    local main=$(gitmain)
+    
+    if [ -z "$current" ] || [ -z "$main" ]; then
+        echo "Unable to determine current or main branch."
+        return 1
+    fi
+
+    if [ "$current" = "$main" ]; then
+        # Count all commits on the main branch
+        git rev-list --count "$main"
     else
-        git rev-list --count $(gitmain)..$(current_branch)
+        # Count commits on current branch that are not on main branch
+        # Use merge-base to find the common ancestor for accurate counting
+        local merge_base=$(git merge-base "$main" "$current" 2>/dev/null)
+        if [ -z "$merge_base" ]; then
+            # If no common ancestor, count all commits on current branch
+            git rev-list --count "$current"
+        else
+            # Count commits from merge-base to current branch
+            git rev-list --count "$merge_base...$current"
+        fi
     fi
 }
 
