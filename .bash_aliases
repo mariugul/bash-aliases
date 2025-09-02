@@ -77,6 +77,18 @@ show-help() {
     _help_entry "git-first-commit" "Get the first commit of the current branch ($current_branch)."
     _help_entry "prcreate" "Create a pull request with the base branch set to '$main_branch'" "and the head branch set to the current branch ($current_branch)."
     _help_entry "prcheckout" "Checkout a GitHub pull request by number."
+    
+    # Show shellcheck commands only if the module is loaded
+    if declare -f shellcheck-all >/dev/null 2>&1; then
+        echo ""
+        _help_header "Shellcheck Commands"
+        _help_entry "sc" "Run shellcheck on a single file" "Usage: sc <filename>"
+        _help_entry "sca" "Run shellcheck on all bash scripts in project"
+        _help_entry "scs" "Run strict shellcheck with all severity levels"
+        _help_entry "scf" "Show common shellcheck fixes (manual)"
+        _help_entry "sci" "Install shellcheck if not present"
+        _help_entry "shellcheck-all" "Detailed shellcheck report for all scripts"
+    fi
     echo ""
 }
 

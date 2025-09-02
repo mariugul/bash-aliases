@@ -1,0 +1,18 @@
+# Shellcheck configuration for bash-aliases project
+# See: https://github.com/koalaman/shellcheck/wiki/Ignore
+
+# Disable specific warnings that are common in alias/function files
+disable=SC1091  # Not following sourced files (common with dynamic sourcing)
+disable=SC2034  # Variable appears unused (common in modular scripts)
+disable=SC2086  # Double quote to prevent globbing (sometimes intentional)
+disable=SC2155  # Declare and assign separately (common pattern in functions)
+
+# Enable additional checks
+enable=require-variable-braces  # Require ${var} instead of $var
+enable=quote-safe-variables     # Quote variables that could contain spaces
+
+# Set shell to bash
+shell=bash
+
+# Exclude paths (if needed)
+# exclude-dir=.git

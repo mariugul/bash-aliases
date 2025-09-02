@@ -7,8 +7,21 @@ URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.ba
 LOCAL_FILE="./.bash_aliases"
 LOCAL_DIR="./.bash_aliases.d"
 
-# Module files to install
-MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh")
+# Base module files to install
+BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh")
+
+# Get modules list based on dev mode
+get_modules() {
+    local dev_mode="$1"
+    local modules=("${BASE_MODULES[@]}")
+    
+    # Only include shellcheck.sh in dev mode
+    if [[ "$dev_mode" == "--dev" ]]; then
+        modules+=("shellcheck.sh")
+    fi
+    
+    printf '%s\n' "${modules[@]}"
+}
 
 show_help() {
     echo "Bash Aliases Installer"
@@ -67,13 +80,17 @@ done
 install_modules() {
     local dev_mode="$1"
     
+    # Get the appropriate modules list
+    local modules
+    readarray -t modules < <(get_modules "$dev_mode")
+    
     # Create the modules directory
     mkdir -p "$TARGET_DIR"
     
     if [ "$dev_mode" == "--dev" ]; then
         # Copy local modules
         if [ -d "$LOCAL_DIR" ]; then
-            for module in "${MODULES[@]}"; do
+            for module in "${modules[@]}"; do
                 if [ -f "$LOCAL_DIR/$module" ]; then
                     cp "$LOCAL_DIR/$module" "$TARGET_DIR/$module"
                     echo " - Installed module: $module"
@@ -82,13 +99,22 @@ install_modules() {
         else
             echo "Warning: Local module directory $LOCAL_DIR not found"
         fi
+        
+        # Copy shellcheck configuration if it exists locally (only in dev mode)
+        if [ -f "./.shellcheckrc" ]; then
+            cp "./.shellcheckrc" "$HOME/.shellcheckrc"
+            echo " - Installed .shellcheckrc configuration"
+        fi
     else
         # Download modules from repository
-        for module in "${MODULES[@]}"; do
+        for module in "${modules[@]}"; do
             local module_url="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases.d/$module"
             curl -sSLo "$TARGET_DIR/$module" "$module_url"
             echo " - Downloaded module: $module"
         done
+        
+        # Note: shellcheck.sh and .shellcheckrc are not downloaded in regular installs
+        echo " - Skipped shellcheck module (use --dev for development tools)"
     fi
 }
 
