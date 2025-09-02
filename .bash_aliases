@@ -149,13 +149,21 @@ commits-on-branch() {
     else
         # Count commits on current branch that are not on main branch
         # Use merge-base to find the common ancestor for accurate counting
-        local merge_base=$(git merge-base "$main" "$current" 2>/dev/null)
+        local primary_remote=$(get-primary-remote)
+        if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
+            # Fallback to local main if remote unavailable
+            local merge_base=$(git merge-base "$main" "$current" 2>/dev/null)
+        else
+            # Use remote main branch for more accurate comparison
+            local merge_base=$(git merge-base "$primary_remote/$main" "$current" 2>/dev/null)
+        fi
+        
         if [ -z "$merge_base" ]; then
             # If no common ancestor, count all commits on current branch
             git rev-list --count "$current"
         else
             # Count commits from merge-base to current branch
-            git rev-list --count "$merge_base...$current"
+            git rev-list --count "$merge_base..$current"
         fi
     fi
 }
