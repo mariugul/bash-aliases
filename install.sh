@@ -8,7 +8,7 @@ LOCAL_FILE="./.bash_aliases"
 LOCAL_DIR="./.bash_aliases.d"
 
 # Module files to install
-MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh")
+MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh")
 
 show_help() {
     echo "Bash Aliases Installer"
