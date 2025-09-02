@@ -17,20 +17,20 @@ check-shellcheck() {
 # Run shellcheck on a single file
 shellcheck-file() {
     local file="$1"
-    if [[ -z "$file" ]]; then
+    if [[ -z "${file}" ]]; then
         echo "Usage: shellcheck-file <file>"
         return 1
     fi
     
-    if [[ ! -f "$file" ]]; then
-        echo "Error: File '$file' not found"
+    if [[ ! -f "${file}" ]]; then
+        echo "Error: File '${file}' not found"
         return 1
     fi
     
     check-shellcheck || return 1
     
-    echo "Checking $file..."
-    shellcheck "$file"
+    echo "Checking ${file}..."
+    shellcheck "${file}"
 }
 
 # Run shellcheck on all bash scripts in current directory
@@ -66,9 +66,9 @@ shellcheck-all() {
     # Check all .sh files in .bash_aliases.d/
     if [[ -d ".bash_aliases.d" ]]; then
         for script in .bash_aliases.d/*.sh; do
-            if [[ -f "$script" ]]; then
-                echo "Checking $script..."
-                if ! shellcheck "$script"; then
+            if [[ -f "${script}" ]]; then
+                echo "Checking ${script}..."
+                if ! shellcheck "${script}"; then
                     ((files_with_issues++))
                 fi
                 ((files_found++))
@@ -80,11 +80,11 @@ shellcheck-all() {
     # Summary
     echo "=================================="
     echo "Shellcheck Summary:"
-    echo "  Files checked: $files_found"
-    echo "  Files with issues: $files_with_issues"
+    echo "  Files checked: ${files_found}"
+    echo "  Files with issues: ${files_with_issues}"
     echo "  Files clean: $((files_found - files_with_issues))"
     
-    if [[ $files_with_issues -eq 0 ]]; then
+    if [[ ${files_with_issues} -eq 0 ]]; then
         echo "🎉 All scripts passed shellcheck!"
         return 0
     else
@@ -100,12 +100,12 @@ shellcheck-strict() {
     local target="${1:-.}"
     echo "Running strict shellcheck (all severity levels)..."
     
-    if [[ -f "$target" ]]; then
-        shellcheck --severity=style "$target"
+    if [[ -f "${target}" ]]; then
+        shellcheck --severity=style "${target}"
     else
-        find "$target" -name "*.sh" -o -name ".bash_aliases" -o -name "install.sh" | while read -r file; do
-            echo "Checking $file (strict)..."
-            shellcheck --severity=style "$file"
+        find "${target}" -name "*.sh" -o -name ".bash_aliases" -o -name "install.sh" | while read -r file; do
+            echo "Checking ${file} (strict)..."
+            shellcheck --severity=style "${file}"
             echo ""
         done
     fi

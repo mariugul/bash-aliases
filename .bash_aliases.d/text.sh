@@ -23,13 +23,13 @@ text() {
     local formats="$*"  # All remaining arguments as formatting options
     
     # If no arguments provided, just return
-    if [[ -z "$text" ]]; then
+    if [[ -z "${text}" ]]; then
         return
     fi
     
     # If only text provided, output plain text
-    if [[ -z "$color" ]]; then
-        echo "$text"
+    if [[ -z "${color}" ]]; then
+        echo "${text}"
         return
     fi
     
@@ -37,10 +37,10 @@ text() {
     local format_codes=()
     
     # Check if second argument is actually a format, not a color
-    case "$color" in
+    case "${color}" in
         bold|italic|underline|*,*)
             # Second argument is formatting, not color
-            formats="$color $formats"
+            formats="${color} ${formats}"
             color=""
             ;;
         red)     color_code="31" ;;
@@ -52,18 +52,18 @@ text() {
         white)   color_code="37" ;;
         *)       
             # Unknown color, treat as plain text
-            echo "$text"
+            echo "${text}"
             return
             ;;
     esac
     
     # Parse formatting options (can be comma-separated or space-separated)
     local format_string=""
-    if [[ -n "$formats" ]]; then
+    if [[ -n "${formats}" ]]; then
         # Replace commas with spaces and process each format
         formats="${formats//,/ }"
-        for format in $formats; do
-            case "$format" in
+        for format in ${formats}; do
+            case "${format}" in
                 bold)      format_codes+=("1") ;;
                 italic)    format_codes+=("3") ;;
                 underline) format_codes+=("4") ;;
@@ -78,14 +78,14 @@ text() {
     # Add format codes
     if [[ ${#format_codes[@]} -gt 0 ]]; then
         codes+=("${format_codes[@]}")
-    elif [[ -n "$color_code" ]]; then
+    elif [[ -n "${color_code}" ]]; then
         # Default to bold if color is specified but no format
         codes+=("1")
     fi
     
     # Add color code
-    if [[ -n "$color_code" ]]; then
-        codes+=("$color_code")
+    if [[ -n "${color_code}" ]]; then
+        codes+=("${color_code}")
     fi
     
     # Join codes with semicolons
@@ -94,7 +94,7 @@ text() {
         escape_seq="${escape_seq}${codes[*]}m"
         echo -e "${escape_seq}${text}\033[00m"
     else
-        echo "$text"
+        echo "${text}"
     fi
 }
 

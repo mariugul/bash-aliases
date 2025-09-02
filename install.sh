@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Define target files and directories
-TARGET="$HOME/.bash_aliases"
-TARGET_DIR="$HOME/.bash_aliases.d"
+TARGET="${HOME}/.bash_aliases"
+TARGET_DIR="${HOME}/.bash_aliases.d"
 URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases"
 LOCAL_FILE="./.bash_aliases"
 LOCAL_DIR="./.bash_aliases.d"
@@ -12,11 +12,11 @@ BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text
 
 # Get modules list based on dev mode
 get_modules() {
-    local dev_mode="$1"
+    local dev_mode="${1}"
     local modules=("${BASE_MODULES[@]}")
     
     # Only include shellcheck.sh in dev mode
-    if [[ "$dev_mode" == "--dev" ]]; then
+    if [[ "${dev_mode}" == "--dev" ]]; then
         modules+=("shellcheck.sh")
     fi
     
@@ -54,8 +54,8 @@ show_help() {
 dev_mode=""
 action_mode=""
 
-for arg in "$@"; do
-    case $arg in
+for arg in "${@}"; do
+    case ${arg} in
         --help|-h)
             show_help
             exit 0
@@ -70,7 +70,7 @@ for arg in "$@"; do
             action_mode="replace"
             ;;
         *)
-            echo "Unknown option: $arg"
+            echo "Unknown option: ${arg}"
             echo "Use --help for usage information."
             exit 1
             ;;
@@ -78,39 +78,39 @@ for arg in "$@"; do
 done
 
 install_modules() {
-    local dev_mode="$1"
+    local dev_mode="${1}"
     
     # Get the appropriate modules list
     local modules
-    readarray -t modules < <(get_modules "$dev_mode")
+    readarray -t modules < <(get_modules "${dev_mode}")
     
     # Create the modules directory
-    mkdir -p "$TARGET_DIR"
+    mkdir -p "${TARGET_DIR}"
     
-    if [ "$dev_mode" == "--dev" ]; then
+    if [ "${dev_mode}" == "--dev" ]; then
         # Copy local modules
-        if [ -d "$LOCAL_DIR" ]; then
+        if [ -d "${LOCAL_DIR}" ]; then
             for module in "${modules[@]}"; do
-                if [ -f "$LOCAL_DIR/$module" ]; then
-                    cp "$LOCAL_DIR/$module" "$TARGET_DIR/$module"
-                    echo " - Installed module: $module"
+                if [ -f "${LOCAL_DIR}/${module}" ]; then
+                    cp "${LOCAL_DIR}/${module}" "${TARGET_DIR}/${module}"
+                    echo " - Installed module: ${module}"
                 fi
             done
         else
-            echo "Warning: Local module directory $LOCAL_DIR not found"
+            echo "Warning: Local module directory ${LOCAL_DIR} not found"
         fi
         
         # Copy shellcheck configuration if it exists locally (only in dev mode)
         if [ -f "./.shellcheckrc" ]; then
-            cp "./.shellcheckrc" "$HOME/.shellcheckrc"
+            cp "./.shellcheckrc" "${HOME}/.shellcheckrc"
             echo " - Installed .shellcheckrc configuration"
         fi
     else
         # Download modules from repository
         for module in "${modules[@]}"; do
-            local module_url="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases.d/$module"
-            curl -sSLo "$TARGET_DIR/$module" "$module_url"
-            echo " - Downloaded module: $module"
+            local module_url="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases.d/${module}"
+            curl -sSLo "${TARGET_DIR}/${module}" "${module_url}"
+            echo " - Downloaded module: ${module}"
         done
         
         # Note: shellcheck.sh and .shellcheckrc are not downloaded in regular installs
@@ -119,71 +119,71 @@ install_modules() {
 }
 
 backup_and_replace() {
-    cp "$TARGET" "$TARGET.bak"
-    echo " - Backup of existing .bash_aliases created at $TARGET.bak"
-    if [ "$dev_mode" == "--dev" ] || [ "$1" == "r" ]; then
-        cp "$LOCAL_FILE" "$TARGET"
+    cp "${TARGET}" "${TARGET}.bak"
+    echo " - Backup of existing .bash_aliases created at ${TARGET}.bak"
+    if [ "${dev_mode}" == "--dev" ] || [ "${1}" == "r" ]; then
+        cp "${LOCAL_FILE}" "${TARGET}"
         echo " - Replaced existing .bash_aliases with the local one."
     else
-        curl -sSLo "$TARGET" "$URL"
+        curl -sSLo "${TARGET}" "${URL}"
         echo " - Replaced existing .bash_aliases with the new one."
     fi
     
     # Install modules
-    install_modules "$dev_mode"
+    install_modules "${dev_mode}"
 }
 
 append_to_existing() {
-    if [ "$1" == "--dev" ]; then
-        cat "$LOCAL_FILE" >> "$TARGET"
+    if [ "${1}" == "--dev" ]; then
+        cat "${LOCAL_FILE}" >> "${TARGET}"
         echo "Appended local aliases to existing .bash_aliases."
     else
-        curl -sS "$URL" >> "$TARGET"
+        curl -sS "${URL}" >> "${TARGET}"
         echo "Appended new aliases to existing .bash_aliases."
     fi
     
     # Install modules (will create directory if needed)
-    install_modules "$1"
+    install_modules "${1}"
 }
 
 download_new() {
-    if [ "$1" == "--dev" ]; then
-        cp "$LOCAL_FILE" "$TARGET"
+    if [ "${1}" == "--dev" ]; then
+        cp "${LOCAL_FILE}" "${TARGET}"
         echo "Copied local .bash_aliases."
     else
-        curl -sSLo "$TARGET" "$URL"
+        curl -sSLo "${TARGET}" "${URL}"
         echo "Downloaded new .bash_aliases."
     fi
     
     # Install modules
-    install_modules "$1"
+    install_modules "${1}"
 }
 
 echo "Installing bash aliases..."
 
 # Handle existing .bash_aliases file
-if [ -f "$TARGET" ]; then
+if [ -f "${TARGET}" ]; then
     echo -e "\nA .bash_aliases file already exists."
     
     # Non-interactive mode
-    if [ -n "$action_mode" ]; then
-        case "$action_mode" in
+    if [ -n "${action_mode}" ]; then
+        case "${action_mode}" in
             append)
-                append_to_existing "$dev_mode"
+                append_to_existing "${dev_mode}"
                 ;;
             replace)
-                backup_and_replace "$dev_mode"
+                backup_and_replace "${dev_mode}"
                 ;;
         esac
     else
         # Interactive mode
-        read -p "Do you want to (a)ppend to it or (r)eplace it? " choice
-        case "$choice" in
+        read -r -p "Do you want to (a)ppend to it or (r)eplace it? " choice
+        case "${choice}" in
             a|A)
-                append_to_existing "$dev_mode"
+                append_to_existing "${dev_mode}"
                 ;;
             r|R)
-                backup_and_replace "$dev_mode"
+                backup_and_replace "${dev_mode}"
                 ;;
             *)
                 echo "Invalid choice. Exiting."
@@ -192,7 +192,7 @@ if [ -f "$TARGET" ]; then
         esac
     fi
 else
-    download_new "$dev_mode"
+    download_new "${dev_mode}"
 fi
 
 echo -e "\nBash aliases installed!"

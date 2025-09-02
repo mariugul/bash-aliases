@@ -27,25 +27,25 @@ alias gfa='git fetch --all'
 # Git log functions
 glb() {
     # Show the git log for the current branch
-    git log --first-parent $(git-first-commit)..HEAD --decorate --graph --stat
+    git log --first-parent "$(git-first-commit)"..HEAD --decorate --graph --stat
 }
 
 glob() {
     # Show the git log for the current branch
-    git log --oneline --first-parent $(git-first-commit)..HEAD
+    git log --oneline --first-parent "$(git-first-commit)"..HEAD
 }
 
 # Git commit functions
 gc-release-as() {
     check-git-repo || return 1
 
-    if [ -z "$1" ]; then
+    if [ -z "${1}" ]; then
         echo "Usage: release_as <version>"
         return 1
     fi
 
-    version=$1
-    git commit --allow-empty -m "chore($(gitmain)): release $version" -m "Release-As: $version"
+    version=${1}
+    git commit --allow-empty -m "chore($(gitmain)): release ${version}" -m "Release-As: ${version}"
 }
 
 # GitHub CLI aliases

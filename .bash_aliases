@@ -4,26 +4,27 @@
 
 # Source all modules from ~/.bash_aliases.d/
 for module in ~/.bash_aliases.d/*.sh; do
-    if [ -r "$module" ]; then
-        source "$module"
+    if [ -r "${module}" ]; then
+        # shellcheck source=/dev/null
+        source "${module}"
     fi
 done
 
 
 # Helper function to format help entries
 _help_entry() {
-    local cmd="$1"
-    local desc="$2"
-    local usage="$3"
+    local cmd="${1}"
+    local desc="${2}"
+    local usage="${3}"
     
-    printf "%-18s : %s\n" "$cmd" "$(text "$desc" italic)"
-    if [[ -n "$usage" ]]; then
-        printf "%-18s : %s\n" "" "$(text "$usage" italic)"
+    printf "%-18s : %s\n" "${cmd}" "$(text "${desc}" italic)"
+    if [[ -n "${usage}" ]]; then
+        printf "%-18s : %s\n" "" "$(text "${usage}" italic)"
     fi
 }
 
 _help_header() {
-    text "$1" blue bold underline italic
+    text "${1}" blue bold underline italic
 }
 
 # Show help for commands
@@ -71,11 +72,11 @@ show-help() {
     _help_entry "current-repo" "Get the name of the current git repository."
     _help_entry "is-git-repo" "Check if the current directory is a git repository."
     _help_entry "current-branch" "Get the name of the current git branch."
-    _help_entry "gitmain" "Get the '$main_branch' branch of the repository."
+    _help_entry "gitmain" "Get the '${main_branch}' branch of the repository."
     _help_entry "commits-on-branch" "Get the number of commits on the current branch."
     _help_entry "gc-release-as" "Create a release commit with a specified version."
-    _help_entry "git-first-commit" "Get the first commit of the current branch ($current_branch)."
-    _help_entry "prcreate" "Create a pull request with the base branch set to '$main_branch'" "and the head branch set to the current branch ($current_branch)."
+    _help_entry "git-first-commit" "Get the first commit of the current branch (${current_branch})."
+    _help_entry "prcreate" "Create a pull request with the base branch set to '${main_branch}'" "and the head branch set to the current branch (${current_branch})."
     _help_entry "prcheckout" "Checkout a GitHub pull request by number."
     
     # Show shellcheck commands only if the module is loaded
@@ -96,5 +97,5 @@ show-help() {
 if is-git-repo; then
     echo -e "Checked out on \033[01;36m$(current-branch)\033[00m in repo \033[01;36m$(current-repo)\033[00m"
     git_status=$(git status)
-    check-and-pull "$git_status" false
+    check-and-pull "${git_status}" false
 fi

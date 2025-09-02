@@ -8,33 +8,33 @@ get-primary-remote() {
     check-git-repo || return 1
     
     local remotes=$(git remote)
-    if [ -z "$remotes" ]; then
+    if [ -z "${remotes}" ]; then
         echo "No remotes found in this repository."
         return 1
     fi
     
     # Check for upstream first (common in fork scenarios)
-    if echo "$remotes" | grep -q "^upstream$"; then
+    if echo "${remotes}" | grep -q "^upstream$"; then
         echo "upstream"
         return 0
     fi
     
     # Check for origin second (most common)
-    if echo "$remotes" | grep -q "^origin$"; then
+    if echo "${remotes}" | grep -q "^origin$"; then
         echo "origin"
         return 0
     fi
     
     # Fall back to first available remote
-    echo "$remotes" | head -n 1
+    echo "${remotes}" | head -n 1
 }
 
 current-repo() {
     local primary_remote=$(get-primary-remote)
-    if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
+    if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
         return 1
     fi
-    git remote get-url "$primary_remote" 2> /dev/null | sed -n 's#.*/\([^.]*\)\.git#\1#p'
+    git remote get-url "${primary_remote}" 2> /dev/null | sed -n 's#.*/\([^.]*\)\.git#\1#p'
 }
 
 is-git-repo() {
@@ -55,8 +55,9 @@ current-branch() {
 MAIN_BRANCHES_FILE="/tmp/main_branches"
 
 # Load MAIN_BRANCHES from file if it exists
-if [ -f "$MAIN_BRANCHES_FILE" ]; then
-    source "$MAIN_BRANCHES_FILE"
+if [ -f "${MAIN_BRANCHES_FILE}" ]; then
+    # shellcheck source=/dev/null
+    source "${MAIN_BRANCHES_FILE}"
 else
     declare -A MAIN_BRANCHES
 fi
@@ -65,41 +66,40 @@ gitmain() {
     check-git-repo || return 1
 
     local repo=$(current-repo)
-    if [ -z "$repo" ]; then
+    if [ -z "${repo}" ]; then
         echo "Unable to determine repository name."
         return 1
     fi
 
-    if [ -z "${MAIN_BRANCHES[$repo]}" ]; then
+    if [ -z "${MAIN_BRANCHES[${repo}]}" ]; then
         local primary_remote=$(get-primary-remote)
-        if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
+        if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
             echo "Unable to determine primary remote."
             return 1
         fi
         
         # Try to get the default branch from the remote
-        local main_branch=$(git remote show "$primary_remote" 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}')
+        local main_branch=$(git remote show "${primary_remote}" 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}')
         
         # If that fails, try common main branch names that exist locally
-        if [ -z "$main_branch" ] || [ "$main_branch" = "(unknown)" ]; then
+        if [ -z "${main_branch}" ] || [ "${main_branch}" = "(unknown)" ]; then
             for branch in main master develop; do
-                if git show-ref --verify --quiet "refs/heads/$branch"; then
-                    main_branch="$branch"
+                if git show-ref --verify --quiet "refs/heads/${branch}"; then
+                    main_branch="${branch}"
                     break
                 fi
             done
         fi
         
         # If still no main branch found, default to 'main'
-        if [ -z "$main_branch" ]; then
+        if [ -z "${main_branch}" ]; then
             main_branch="main"
         fi
         
-        MAIN_BRANCHES[$repo]="$main_branch"
-        # Save MAIN_BRANCHES to file
-        declare -p MAIN_BRANCHES > "$MAIN_BRANCHES_FILE"
+        MAIN_BRANCHES[${repo}]="${main_branch}"
+        declare -p MAIN_BRANCHES > "${MAIN_BRANCHES_FILE}"
     fi
-    echo "${MAIN_BRANCHES[$repo]}"
+    echo "${MAIN_BRANCHES[${repo}]}"
 }
 
 commits-on-branch() {
@@ -108,32 +108,27 @@ commits-on-branch() {
     local current=$(current-branch)
     local main=$(gitmain)
     
-    if [ -z "$current" ] || [ -z "$main" ]; then
+    if [ -z "${current}" ] || [ -z "${main}" ]; then
         echo "Unable to determine current or main branch."
         return 1
     fi
 
-    if [ "$current" = "$main" ]; then
-        # Count all commits on the main branch
-        git rev-list --count "$main"
+    if [ "${current}" = "${main}" ]; then
+        git rev-list --count "${main}"
     else
         # Count commits on current branch that are not on main branch
         # Use merge-base to find the common ancestor for accurate counting
         local primary_remote=$(get-primary-remote)
-        if [ $? -ne 0 ] || [ -z "$primary_remote" ]; then
-            # Fallback to local main if remote unavailable
-            local merge_base=$(git merge-base "$main" "$current" 2>/dev/null)
+        if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
+            local merge_base=$(git merge-base "${main}" "${current}" 2>/dev/null)
         else
-            # Use remote main branch for more accurate comparison
-            local merge_base=$(git merge-base "$primary_remote/$main" "$current" 2>/dev/null)
+            local merge_base=$(git merge-base "${primary_remote}/${main}" "${current}" 2>/dev/null)
         fi
         
-        if [ -z "$merge_base" ]; then
-            # If no common ancestor, count all commits on current branch
-            git rev-list --count "$current"
+        if [ -z "${merge_base}" ]; then
+            git rev-list --count "${current}"
         else
-            # Count commits from merge-base to current branch
-            git rev-list --count "$merge_base..$current"
+            git rev-list --count "${merge_base}..${current}"
         fi
     fi
 }
@@ -141,7 +136,7 @@ commits-on-branch() {
 git-first-commit() {
     # Finds the first commit on the current branch
     check-git-repo || return 1
-    git merge-base HEAD $(gitmain)
+    git merge-base HEAD "$(gitmain)"
 }
 
 git-remotes() {
@@ -159,19 +154,21 @@ sorted-branches-with-main-first() {
     # Find main or master
     for b in "main" "master"; do
         for i in "${!all_branches[@]}"; do
-            if [ "${all_branches[$i]}" = "$b" ]; then
-                main_branch="$b"
-                unset 'all_branches[$i]'
+            if [ "${all_branches[${i}]}" = "${b}" ]; then
+                main_branch="${b}"
+                unset 'all_branches[${i}]'
                 break 2
             fi
         done
     done
     # Sort the rest
-    IFS=$'\n' sorted_branches=( $(printf "%s\n" "${all_branches[@]}" | sort) )
+    local temp_array
+    mapfile -t temp_array < <(printf "%s\n" "${all_branches[@]}" | sort)
+    local sorted_branches=("${temp_array[@]}")
     unset IFS
     # Prepend main/master if found
-    if [ -n "$main_branch" ]; then
-        echo "$main_branch" "${sorted_branches[@]}"
+    if [ -n "${main_branch}" ]; then
+        echo "${main_branch}" "${sorted_branches[@]}"
     else
         echo "${sorted_branches[@]}"
     fi

@@ -4,13 +4,16 @@
 
 # Utility function for adding aliases
 alias-add() {
-    if ! grep -q "alias $1=" ~/.bash_aliases; then
-        echo "alias $1='$2'" >> ~/.bash_aliases
+    # shellcheck source=/dev/null
+    if ! grep -q "alias ${1}=" ~/.bash_aliases; then
+        echo "alias ${1}='${2}'" >> ~/.bash_aliases
+        # shellcheck source=/dev/null
         source ~/.bash_aliases
     else
-        echo "Alias $1 already exists."
+        echo "Alias ${1} already exists."
         return 0
     fi
+    # shellcheck source=/dev/null
     source ~/.bash_aliases
 }
 
@@ -43,7 +46,7 @@ alias dirsize='du -sh'
 
 # Utility functions
 mkcd() { 
-    mkdir -p "$1" && cd "$1"; 
+    mkdir -p "${1}" && cd "${1}" || return; 
 }
 
 # Repository management
