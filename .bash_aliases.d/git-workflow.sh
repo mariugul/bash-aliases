@@ -138,7 +138,9 @@ gsw() {
         local all_branches
         mapfile -t all_branches < <(git branch --format='%(refname:short)')
         # Use helper to sort branches
-        readarray -t branches <<< "$(sorted-branches-with-main-first "${all_branches[@]}")"
+        local sorted_output
+        sorted_output=$(sorted-branches-with-main-first "${all_branches[@]}")
+        read -ra branches <<< "${sorted_output}"
         local current_branch=$(current-branch)
         echo "Available branches:"
         for i in "${!branches[@]}"; do
@@ -186,7 +188,9 @@ gbd() {
     local all_branches
     mapfile -t all_branches < <(git branch --format='%(refname:short)')
     # Use helper to sort branches
-    readarray -t branches <<< "$(sorted-branches-with-main-first "${all_branches[@]}")"
+    local sorted_output
+    sorted_output=$(sorted-branches-with-main-first "${all_branches[@]}")
+    read -ra branches <<< "${sorted_output}"
     local current_branch=$(current-branch)
     echo "Available branches:"
     for i in "${!branches[@]}"; do
