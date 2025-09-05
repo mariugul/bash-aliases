@@ -168,8 +168,15 @@ gsw() {
 gitcleanup() {
     check-git-repo || return 1
 
-    echo "Fetching and pruning from all remotes..."         
-    git fetch --all --prune
+    # Show current remotes for context
+    local remotes=$(git remote)
+    local remote_count=$(echo "${remotes}" | wc -l)
+    echo "Found ${remote_count} remote(s): $(echo "${remotes}" | tr '\n' ' ')"
+    
+    echo "Fetching and pruning from all remotes..."
+    if ! git fetch --all --prune; then
+        echo "Warning: Some remotes may have failed to fetch. Continuing..."
+    fi
 
     local branches_to_delete=$(gone-branches)
     branches_to_delete="$(echo -n "${branches_to_delete}" | xargs)"  # trims whitespace
@@ -178,8 +185,19 @@ gitcleanup() {
         return
     fi
 
-    echo "Deleting branches:"
-    git branch --delete --force ${branches_to_delete}
+    echo "Found branches with deleted upstream remotes:"
+    for branch in ${branches_to_delete}; do
+        echo "  - ${branch}"
+    done
+    
+    read -r -p "Delete these branches? [y/N] " confirm_delete
+    if [[ "${confirm_delete}" =~ ^[Yy]$ ]]; then
+        echo "Deleting branches..."
+        git branch --delete --force ${branches_to_delete}
+        echo "Cleanup completed."
+    else
+        echo "Branch deletion cancelled."
+    fi
 }
 
 gbd() {
