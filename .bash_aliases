@@ -61,6 +61,8 @@ show-help() {
     _help_entry "glo" "Show a decorated, graphical git log"
     _help_entry "glob" "Show a one-line log for the current branch"
     _help_entry "glb" "Show a detailed log for the current branch"
+    _help_entry "glr" "Show commit messages between two commits/branches" "Usage: glr <from> <to>"
+    _help_entry "glm" "Show full commit messages between two points" "Usage: glm <from> <to>"
     _help_entry "gb" "List all branches"
     _help_entry "gbd" "Delete a local branch"
     _help_entry "gbo" "Display the current branch name"

@@ -35,6 +35,26 @@ glob() {
     git log --oneline --first-parent "$(git-first-commit)"..HEAD
 }
 
+glr() {
+    # Show commit messages between two commits/branches
+    # Usage: glr <from> <to>
+    if [ $# -ne 2 ]; then
+        echo "Usage: glr <from> <to>"
+        return 1
+    fi
+    git log "$1"^.."$2"
+}
+
+glm() {
+    # Show full commit messages between two points
+    # Usage: glm <from> <to>
+    if [ $# -ne 2 ]; then
+        echo "Usage: glm <from> <to>"
+        return 1
+    fi
+    git log --pretty=format:"%B%n---" "$1"^.."$2"
+}
+
 # Git commit functions
 gc-release-as() {
     check-git-repo || return 1
