@@ -242,6 +242,15 @@ sync-fork() {
         return 1
     fi
 
+    local current_branch=$(current-branch)
+    local needs_branch_switch=false
+    
+    # Check if we need to switch branches
+    if [ "${current_branch}" != "${main_branch}" ]; then
+        needs_branch_switch=true
+        echo "Currently on branch '${current_branch}', switching to '${main_branch}' for syncing..."
+    fi
+
     if ! git remote get-url upstream &> /dev/null; then
         echo "Error: 'upstream' remote does not exist."
         echo "Please add it by running 'git remote add upstream https://github.com/original-repo-url.git'"
@@ -257,6 +266,14 @@ sync-fork() {
         return 1
     fi
 
+    # Switch to main branch if needed
+    if [ "${needs_branch_switch}" = true ]; then
+        if ! git switch "${main_branch}"; then
+            echo "Failed to switch to ${main_branch} branch."
+            return 1
+        fi
+    fi
+
     echo "Fetching upstream..."
     git fetch upstream
 
@@ -265,6 +282,15 @@ sync-fork() {
 
     echo "Force pushing ${main_branch} to origin (your fork)..."
     git push origin ${main_branch} --force
+
+    # Switch back to original branch if we switched away from it
+    if [ "${needs_branch_switch}" = true ]; then
+        echo "Switching back to original branch '${current_branch}'..."
+        if ! git switch "${current_branch}"; then
+            echo "Warning: Failed to switch back to '${current_branch}'. You are currently on '${main_branch}'."
+            return 1
+        fi
+    fi
 }
 
 # GitHub CLI functions
