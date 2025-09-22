@@ -219,15 +219,102 @@ gbd() {
         fi
     done
     echo ""
-    read -r -p "Select a branch to delete: " branch_index
-    if [[ -z "${branches[${branch_index}]}" ]]; then
-        echo "Invalid selection. Please try again."
+    read -r -p "Select branches to delete (comma-separated numbers, e.g., 1,2,3): " branch_indices
+    
+    # Parse comma-separated indices
+    IFS=',' read -ra indices <<< "${branch_indices}"
+    local branches_to_delete=()
+    local invalid_selections=()
+    
+    # Validate all indices and collect branch names
+    for index in "${indices[@]}"; do
+        # Trim whitespace
+        index=$(echo "${index}" | xargs)
+        
+        # Check if index is valid
+        if [[ ! "${index}" =~ ^[0-9]+$ ]] || [[ -z "${branches[${index}]}" ]]; then
+            invalid_selections+=("${index}")
+            continue
+        fi
+        
+        local branch_name="${branches[${index}]}"
+        
+        # Prevent deletion of current branch
+        if [ "${branch_name}" = "${current_branch}" ]; then
+            echo "Warning: Cannot delete current branch '${branch_name}'. Skipping."
+            continue
+        fi
+        
+        branches_to_delete+=("${branch_name}")
+    done
+    
+    # Check for invalid selections
+    if [ ${#invalid_selections[@]} -gt 0 ]; then
+        echo "Invalid selections: ${invalid_selections[*]}"
+        echo "Please try again with valid branch numbers."
         return 1
     fi
-    local branch_to_delete="${branches[${branch_index}]}"
-    read -r -p "Are you sure you want to delete the branch '${branch_to_delete}'? [y/N] " confirmation
+    
+    # Check if any branches were selected for deletion
+    if [ ${#branches_to_delete[@]} -eq 0 ]; then
+        echo "No valid branches selected for deletion."
+        return 1
+    fi
+    
+    # Show branches to be deleted and confirm
+    echo ""
+    echo "Branches selected for deletion:"
+    for branch in "${branches_to_delete[@]}"; do
+        echo "  - ${branch}"
+    done
+    echo ""
+    
+    read -r -p "Are you sure you want to delete these ${#branches_to_delete[@]} branch(es)? [y/N] " confirmation
     if [[ "${confirmation}" =~ ^[Yy]$ ]]; then
-        git branch -d "${branch_to_delete}"
+        echo "Deleting branches..."
+        local failed_branches=()
+        
+        for branch in "${branches_to_delete[@]}"; do
+            if git branch -d "${branch}" 2>/dev/null; then
+                echo "✓ Deleted branch: ${branch}"
+            else
+                # Try to capture the specific error to see if it's about unmerged commits
+                local error_output=$(git branch -d "${branch}" 2>&1)
+                if echo "${error_output}" | grep -q "not fully merged"; then
+                    echo "⚠ Branch '${branch}' is not fully merged"
+                    failed_branches+=("${branch}")
+                else
+                    echo "✗ Failed to delete branch: ${branch}"
+                    echo "  Error: ${error_output}"
+                fi
+            fi
+        done
+        
+        # Handle unmerged branches
+        if [ ${#failed_branches[@]} -gt 0 ]; then
+            echo ""
+            echo "The following branches contain unmerged commits:"
+            for branch in "${failed_branches[@]}"; do
+                echo "  - ${branch}"
+            done
+            echo ""
+            read -r -p "Force delete these unmerged branches? This will permanently lose any unmerged commits! [y/N] " force_confirmation
+            
+            if [[ "${force_confirmation}" =~ ^[Yy]$ ]]; then
+                echo "Force deleting unmerged branches..."
+                for branch in "${failed_branches[@]}"; do
+                    if git branch -D "${branch}"; then
+                        echo "✓ Force deleted branch: ${branch}"
+                    else
+                        echo "✗ Failed to force delete branch: ${branch}"
+                    fi
+                done
+            else
+                echo "Unmerged branches were not deleted."
+            fi
+        fi
+        
+        echo "Branch deletion completed."
     else
         echo "Branch deletion cancelled."
     fi
