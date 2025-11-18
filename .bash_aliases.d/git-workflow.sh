@@ -398,3 +398,41 @@ prcheckout() {
         echo "No PR number entered. Please try again."
     fi
 }
+
+# Show git log with stats for commits on current branch
+gls() {
+    check-git-repo || return 1
+
+    local current=$(current-branch)
+    local main=$(gitmain)
+    
+    if [ -z "${current}" ] || [ -z "${main}" ]; then
+        echo "Unable to determine current or main branch."
+        return 1
+    fi
+
+    if [ "${current}" = "${main}" ]; then
+        echo "You are on the main branch '${main}'."
+        read -r -p "How many commits do you want to see? " commit_count
+        if [[ "${commit_count}" =~ ^[0-9]+$ ]]; then
+            git log --stat --oneline HEAD~${commit_count}..HEAD
+        else
+            echo "Invalid number entered."
+            return 1
+        fi
+    else
+        local commit_count=$(commits-on-branch)
+        if ! commits-on-branch >/dev/null; then
+            echo "Error: Unable to determine the number of commits on the branch."
+            return 1
+        fi
+        
+        if [ "${commit_count}" -eq 0 ]; then
+            echo "No commits found on branch '${current}' that aren't on '${main}'."
+            return 0
+        fi
+        
+        echo "Showing ${commit_count} commits on branch '${current}':"
+        git log --stat --oneline HEAD~${commit_count}..HEAD
+    fi
+}

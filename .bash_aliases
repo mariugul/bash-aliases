@@ -58,6 +58,7 @@ show-help() {
     _help_entry "grm" "Rebase onto the main branch"
     _help_entry "gs" "Show the status of the git repository"
     _help_entry "gl" "Show the git log with stats"
+    _help_entry "gls" "Show git log with stats for commits on current branch"
     _help_entry "glo" "Show a decorated, graphical git log"
     _help_entry "glob" "Show a one-line log for the current branch"
     _help_entry "glb" "Show a detailed log for the current branch"
