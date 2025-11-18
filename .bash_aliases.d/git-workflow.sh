@@ -399,9 +399,15 @@ prcheckout() {
     fi
 }
 
-# Show git log with stats for commits on current branch
+# Show git stats for commits on current branch
+# Usage: gls (concise diff stats) or gls -v (verbose log with stats)
 gls() {
     check-git-repo || return 1
+
+    local verbose=false
+    if [[ "$1" == "-v" ]]; then
+        verbose=true
+    fi
 
     local current=$(current-branch)
     local main=$(gitmain)
@@ -413,9 +419,17 @@ gls() {
 
     if [ "${current}" = "${main}" ]; then
         echo "You are on the main branch '${main}'."
-        read -r -p "How many commits do you want to see? " commit_count
+        if [ "${verbose}" = true ]; then
+            read -r -p "How many commits do you want to see? " commit_count
+        else
+            read -r -p "How many commits do you want to diff? " commit_count
+        fi
         if [[ "${commit_count}" =~ ^[0-9]+$ ]]; then
-            git log --stat --oneline HEAD~${commit_count}..HEAD
+            if [ "${verbose}" = true ]; then
+                git log --stat --oneline HEAD~${commit_count}..HEAD
+            else
+                git diff --stat HEAD~${commit_count}..HEAD
+            fi
         else
             echo "Invalid number entered."
             return 1
@@ -432,7 +446,12 @@ gls() {
             return 0
         fi
         
-        echo "Showing ${commit_count} commits on branch '${current}':"
-        git log --stat --oneline HEAD~${commit_count}..HEAD
+        if [ "${verbose}" = true ]; then
+            echo "Showing ${commit_count} commits on branch '${current}':"
+            git log --stat --oneline HEAD~${commit_count}..HEAD
+        else
+            echo "Showing diff stats for ${commit_count} commits on branch '${current}':"
+            git diff --stat HEAD~${commit_count}..HEAD
+        fi
     fi
 }
