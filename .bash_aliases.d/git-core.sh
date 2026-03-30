@@ -30,8 +30,9 @@ get-primary-remote() {
 }
 
 current-repo() {
-    local primary_remote=$(get-primary-remote)
-    if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
+    local primary_remote
+    primary_remote=$(get-primary-remote) || return 1
+    if [ -z "${primary_remote}" ]; then
         return 1
     fi
     git remote get-url "${primary_remote}" 2> /dev/null | sed -nE 's#.*[:/]([^/]+)/([^/.]+)(\.git)?$#\1/\2#p'
@@ -63,6 +64,7 @@ else
     declare -A MAIN_BRANCHES
 fi
 
+# shellcheck disable=SC2120
 gitmain() {
     check-git-repo || return 1
 
@@ -82,8 +84,9 @@ gitmain() {
     fi
 
     if [ -z "${MAIN_BRANCHES[${repo}]}" ]; then
-        local primary_remote=$(get-primary-remote)
-        if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
+        local primary_remote
+        primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote."; return 1; }
+        if [ -z "${primary_remote}" ]; then
             echo "Unable to determine primary remote."
             return 1
         fi
@@ -116,7 +119,9 @@ commits-on-branch() {
     check-git-repo || return 1
 
     local current=$(current-branch)
-    local main=$(gitmain)
+    local main
+    # shellcheck disable=SC2119
+    main=$(gitmain)
     
     if [ -z "${current}" ] || [ -z "${main}" ]; then
         echo "Unable to determine current or main branch."
@@ -128,11 +133,13 @@ commits-on-branch() {
     else
         # Count commits on current branch that are not on main branch
         # Use merge-base to find the common ancestor for accurate counting
-        local primary_remote=$(get-primary-remote)
-        if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
-            local merge_base=$(git merge-base "${main}" "${current}" 2>/dev/null)
+        local primary_remote
+        primary_remote=$(get-primary-remote) 2>/dev/null
+        local merge_base
+        if [ -z "${primary_remote}" ]; then
+            merge_base=$(git merge-base "${main}" "${current}" 2>/dev/null)
         else
-            local merge_base=$(git merge-base "${primary_remote}/${main}" "${current}" 2>/dev/null)
+            merge_base=$(git merge-base "${primary_remote}/${main}" "${current}" 2>/dev/null)
         fi
         
         if [ -z "${merge_base}" ]; then
@@ -146,6 +153,7 @@ commits-on-branch() {
 git-first-commit() {
     # Finds the first commit on the current branch
     check-git-repo || return 1
+    # shellcheck disable=SC2119
     git merge-base HEAD "$(gitmain)"
 }
 

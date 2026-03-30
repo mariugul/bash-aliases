@@ -94,8 +94,9 @@ gpsupstream() {
 gfo() {
     check-git-repo || return 1
 
-    local primary_remote=$(get-primary-remote)
-    if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
+    local primary_remote
+    primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote."; return 1; }
+    if [ -z "${primary_remote}" ]; then
         echo "Unable to determine primary remote."
         return 1
     fi
