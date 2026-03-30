@@ -34,7 +34,7 @@ current-repo() {
     if ! get-primary-remote >/dev/null || [ -z "${primary_remote}" ]; then
         return 1
     fi
-    git remote get-url "${primary_remote}" 2> /dev/null | sed -n 's#.*/\([^.]*\)\.git#\1#p'
+    git remote get-url "${primary_remote}" 2> /dev/null | sed -nE 's#.*[:/]([^/]+)/([^/.]+)(\.git)?$#\1/\2#p'
 }
 
 is-git-repo() {
@@ -52,7 +52,8 @@ current-branch() {
     git branch --show-current
 }
 
-MAIN_BRANCHES_FILE="/tmp/main_branches"
+MAIN_BRANCHES_FILE="${HOME}/.cache/bash-aliases/main_branches"
+mkdir -p "$(dirname "${MAIN_BRANCHES_FILE}")" 2>/dev/null
 
 # Load MAIN_BRANCHES from file if it exists
 if [ -f "${MAIN_BRANCHES_FILE}" ]; then
@@ -69,6 +70,15 @@ gitmain() {
     if [ -z "${repo}" ]; then
         echo "Unable to determine repository name."
         return 1
+    fi
+
+    if [ "$1" = "--refresh" ]; then
+        unset "MAIN_BRANCHES[${repo}]"
+        rm -f "${MAIN_BRANCHES_FILE}"
+    elif [ "$1" = "--refresh-all" ]; then
+        unset MAIN_BRANCHES
+        declare -gA MAIN_BRANCHES
+        rm -f "${MAIN_BRANCHES_FILE}"
     fi
 
     if [ -z "${MAIN_BRANCHES[${repo}]}" ]; then
