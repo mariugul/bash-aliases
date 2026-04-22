@@ -4,10 +4,28 @@ This repository contains a collection of useful bash aliases and functions to en
 
 ## Installation
 
+### Linux/macOS
+
 To install the bash aliases, run the following command in your terminal:
 
 ```bash
 bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh) && source ~/.bashrc
+```
+
+### Windows (Git Bash)
+
+For Windows users using Git Bash, use the Windows-specific installer:
+
+```bash
+bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install-windows.sh) && source ~/.bash_profile
+```
+
+Or download and run locally:
+
+```bash
+curl -sSLo install-windows.sh https://raw.githubusercontent.com/mariugul/bash-aliases/main/install-windows.sh
+bash install-windows.sh
+source ~/.bash_profile
 ```
 
 ## Usage
@@ -91,10 +109,50 @@ Utility Functions:
   git-first-commit  : Get the first commit of the current branch
 ```
 
+## Platform Compatibility
+
+### Cross-Platform (Linux, macOS, Windows Git Bash)
+
+These commands work on all platforms:
+
+- **Git Commands**: All `g*` aliases (`gs`, `gl`, `gc`, `gco`, `gri`, `grm`, `gbd`, `gsw`, `gitcleanup`, `sync-fork`, etc.)
+- **GitHub CLI**: `prcreate`, `prcheckout`, `prview` (requires `gh` CLI installed)
+- **General**: `c` (clear), `..` navigation, `mkcd`, `myip`, `alias-add`, `pipupgrade`
+- **Text Styling**: `text`, `bold`, `italic`, `underline` (ANSI colors work in Git Bash)
+- **Utilities**: `current-repo`, `current-branch`, `gitmain`, `commits-on-branch`
+
+### Linux/macOS Only
+
+These commands are not available on Windows:
+
+| Command | Reason |
+|---------|--------|
+| `apt-update`, `apt-upgrade` | Debian/Ubuntu package manager |
+| `open-alias-repo` | Uses `xdg-open` (Linux desktop) |
+| `sourcevenv` | Uses Unix path `.venv/bin/activate` |
+| `bash-rc`, `bash-aliases` | Assumes `code` command in PATH |
+| `sourcebashrc` | References `.bashrc` instead of `.bash_profile` |
+| `diskspace` (`df -h`) | Different output/format on Windows |
+| `dirsize` (`du -sh`) | Behaves differently on Windows |
+
+### Windows-Specific Notes
+
+- The Windows installer uses `.bash_profile` instead of `.bashrc`
+- The `upgrade-aliases` command will still work but references the Linux install script
+- VS Code `code` command must be in your PATH for editor aliases to work
+- Python virtual environments use `Scripts/activate` on Windows, not `bin/activate`
+
 ## Updating Aliases
 
 To get the newest updates from the aliases upstream, you can run the following command:
 
 ```bash
 upgrade-aliases
+```
+
+On Windows (Git Bash), run:
+
+```bash
+bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install-windows.sh)
+source ~/.bash_profile
 ```
