@@ -34,8 +34,8 @@ gri() {
         read -r -p "How many commits do you want to interactively rebase? " rebase_count
         git rebase -i HEAD~${rebase_count}
     else
-        local commit_count=$(commits-on-branch)
-        if ! commits-on-branch >/dev/null; then
+        local commit_count
+        if ! commit_count=$(commits-on-branch); then
             echo "Error: Unable to determine the number of commits on the branch."
             return 1
         fi
@@ -436,8 +436,8 @@ gls() {
             return 1
         fi
     else
-        local commit_count=$(commits-on-branch)
-        if ! commits-on-branch >/dev/null; then
+        local commit_count
+        if ! commit_count=$(commits-on-branch); then
             echo "Error: Unable to determine the number of commits on the branch."
             return 1
         fi

@@ -9,7 +9,7 @@ get-primary-remote() {
     
     local remotes=$(git remote)
     if [ -z "${remotes}" ]; then
-        echo "No remotes found in this repository."
+        echo "No remotes found in this repository." >&2
         return 1
     fi
     
@@ -35,7 +35,7 @@ current-repo() {
     if [ -z "${primary_remote}" ]; then
         return 1
     fi
-    git remote get-url "${primary_remote}" 2> /dev/null | sed -nE 's#.*[:/]([^/]+)/([^/.]+)(\.git)?$#\1/\2#p'
+    git remote get-url "${primary_remote}" 2> /dev/null | sed -nE 's#.*[:/]([^/]+)/([^/]+)$#\1/\2#p' | sed 's/\.git$//'
 }
 
 is-git-repo() {
@@ -70,7 +70,7 @@ gitmain() {
 
     local repo=$(current-repo)
     if [ -z "${repo}" ]; then
-        echo "Unable to determine repository name."
+        echo "Unable to determine repository name." >&2
         return 1
     fi
 
@@ -124,7 +124,7 @@ commits-on-branch() {
     main=$(gitmain)
     
     if [ -z "${current}" ] || [ -z "${main}" ]; then
-        echo "Unable to determine current or main branch."
+        echo "Unable to determine current or main branch." >&2
         return 1
     fi
 
