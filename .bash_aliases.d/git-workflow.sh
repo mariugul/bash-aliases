@@ -166,6 +166,24 @@ gsw() {
     check-and-pull "${switch_output}" true
 }
 
+# Emit one "branch<TAB>path<TAB>flags" line per worktree, primary worktree
+# first. Detached or bare entries have an empty branch field.
+_gitcleanup-worktrees() {
+    git worktree list --porcelain | awk '
+        /^worktree / { if (path != "") print br "\t" path "\t" flags
+                       path = substr($0, 10); br = ""; flags = "" }
+        /^branch /   { br = substr($0, 8); sub(/^refs\/heads\//, "", br) }
+        /^locked/    { flags = flags "locked," }
+        END          { if (path != "") print br "\t" path "\t" flags }
+    '
+}
+
+# Canonicalize a path for comparison: resolve symlinks when the directory
+# exists, echo the input unchanged otherwise.
+_gitcleanup-canon-path() {
+    (cd "${1}" 2> /dev/null && pwd -P) || printf '%s\n' "${1}"
+}
+
 gitcleanup() {
     check-git-repo || return 1
 
@@ -173,11 +191,14 @@ gitcleanup() {
     local remotes=$(git remote)
     local remote_count=$(echo "${remotes}" | wc -l)
     echo "Found ${remote_count} remote(s): $(echo "${remotes}" | tr '\n' ' ')"
-    
+
     echo "Fetching and pruning from all remotes..."
     if ! git fetch --all --prune; then
         echo "Warning: Some remotes may have failed to fetch. Continuing..."
     fi
+
+    # Drop stale registrations for worktree directories removed by hand
+    git worktree prune
 
     local branches_to_delete=$(gone-branches)
     branches_to_delete="$(echo -n "${branches_to_delete}" | xargs)"  # trims whitespace
@@ -186,19 +207,72 @@ gitcleanup() {
         return
     fi
 
-    echo "Found branches with deleted upstream remotes:"
+    # A branch checked out in a linked worktree needs that worktree removed
+    # before the branch can be deleted.
+    local wt_table=$(_gitcleanup-worktrees)
+    local current_wt=$(_gitcleanup-canon-path "$(git rev-parse --show-toplevel)")
+    local primary_wt=$(_gitcleanup-canon-path "$(echo "${wt_table}" | head -n 1 | cut -f 2)")
+
+    local -a del_branches=() rm_worktrees=() skipped=()
+    local branch wt_path wt_flags entry
     for branch in ${branches_to_delete}; do
+        entry=$(awk -F '\t' -v b="${branch}" '$1 == b { print $2 "\t" $3; exit }' <<< "${wt_table}")
+        if [ -z "${entry}" ]; then
+            del_branches+=("${branch}")
+            continue
+        fi
+        wt_path="${entry%%$'\t'*}"
+        wt_flags="${entry#*$'\t'}"
+
+        if [ "$(_gitcleanup-canon-path "${wt_path}")" = "${primary_wt}" ]; then
+            skipped+=("${branch} (checked out in the primary worktree)")
+        elif [ "$(_gitcleanup-canon-path "${wt_path}")" = "${current_wt}" ]; then
+            skipped+=("${branch} (checked out in the current worktree)")
+        elif [[ "${wt_flags}" == *locked* ]]; then
+            skipped+=("${branch} (worktree is locked: ${wt_path})")
+        elif [ -n "$(git -C "${wt_path}" status --porcelain 2> /dev/null)" ]; then
+            skipped+=("${branch} (worktree has uncommitted changes: ${wt_path})")
+        else
+            rm_worktrees+=("${branch}"$'\t'"${wt_path}")
+        fi
+    done
+
+    echo "Found branches with deleted upstream remotes:"
+    for branch in "${del_branches[@]}"; do
         echo "  - ${branch}"
     done
-    
-    read -r -p "Delete these branches? [y/N] " confirm_delete
-    if [[ "${confirm_delete}" =~ ^[Yy]$ ]]; then
-        echo "Deleting branches..."
-        git branch --delete --force ${branches_to_delete}
-        echo "Cleanup completed."
-    else
-        echo "Branch deletion cancelled."
+    for entry in "${rm_worktrees[@]}"; do
+        echo "  - ${entry%%$'\t'*} (remove worktree ${entry#*$'\t'})"
+    done
+    for entry in "${skipped[@]}"; do
+        echo "  skipped: ${entry}"
+    done
+
+    if [ ${#del_branches[@]} -eq 0 ] && [ ${#rm_worktrees[@]} -eq 0 ]; then
+        echo "No branches to clean up."
+        return
     fi
+
+    read -r -p "Delete these branches? [y/N] " confirm_delete
+    if [[ ! "${confirm_delete}" =~ ^[Yy]$ ]]; then
+        echo "Branch deletion cancelled."
+        return
+    fi
+
+    echo "Deleting branches..."
+    if [ ${#del_branches[@]} -gt 0 ]; then
+        git branch --delete --force "${del_branches[@]}"
+    fi
+    for entry in "${rm_worktrees[@]}"; do
+        branch="${entry%%$'\t'*}"
+        wt_path="${entry#*$'\t'}"
+        if git worktree remove "${wt_path}"; then
+            git branch --delete --force "${branch}"
+        else
+            echo "Skipped branch '${branch}': failed to remove worktree ${wt_path}"
+        fi
+    done
+    echo "Cleanup completed."
 }
 
 gbd() {

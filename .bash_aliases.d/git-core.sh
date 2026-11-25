@@ -165,8 +165,9 @@ gone-branches() {
     # Find local branches whose upstream has been deleted (marked as "gone")
     # This works with multiple remotes including fork/upstream scenarios
     git branch -vv | awk '/\[.*: gone\]/ {
-        # Extract just the branch name (first field after any leading spaces/asterisk)
-        gsub(/^[[:space:]]*\*?[[:space:]]*/, "")  # Remove leading spaces and asterisk
+        # Extract just the branch name (first field after any leading spaces,
+        # the current-branch "*" or linked-worktree "+" marker)
+        gsub(/^[[:space:]]*[*+]?[[:space:]]*/, "")
         print $1  # Print just the branch name
     }' | tr '\n' ' '
 }
