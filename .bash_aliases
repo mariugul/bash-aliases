@@ -66,6 +66,7 @@ show-help() {
     _help_entry "glm" "Show full commit messages between two points" "Usage: glm <from> <to>"
     _help_entry "gb" "List all branches"
     _help_entry "gbd" "Delete a local branch"
+    _help_entry "gitcleanup" "Delete branches with gone upstreams and their linked worktrees"
     _help_entry "gbo" "Display the current branch name"
     _help_entry "gco" "Checkout a branch"
     _help_entry "gc" "Commit changes with a message"

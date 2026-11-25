@@ -91,7 +91,7 @@ Git Commands:
   gswm            : git switch main
   gsw-            : git switch - (previous branch)
   gitundolast     : git reset --soft HEAD~1
-  gitcleanup      : Prune remotes and delete gone branches (interactive)
+  gitcleanup      : Prune remotes, delete gone branches and their worktrees (interactive)
   sync-fork       : Sync a forked repo with upstream
 
 GitHub CLI:
@@ -141,6 +141,17 @@ These commands are not available on Windows:
 - The `upgrade-aliases` command will still work but references the Linux install script
 - VS Code `code` command must be in your PATH for editor aliases to work
 - Python virtual environments use `Scripts/activate` on Windows, not `bin/activate`
+
+## Development
+
+### Running tests
+
+Regression tests live in `tests/` and build throwaway repositories under a
+temporary directory — they never touch real repositories:
+
+```bash
+bash tests/test-gitcleanup.sh
+```
 
 ## Updating Aliases
 
