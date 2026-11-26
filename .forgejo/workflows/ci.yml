@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck (pinned release)
+        run: |
+          set -e
+          curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz \
+            | tar -xJv
+          sudo cp shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
+          shellcheck --version
+
+      - name: Shellcheck all scripts
+        run: |
+          set -e
+          while IFS= read -r f; do
+            echo "== $f"
+            shellcheck -x "$f"
+          done < <(find . -path ./.git -prune -o -type f \( -name '*.sh' -o -name '.bash_aliases' \) -print)
+
+      - name: Run test suite
+        run: |
+          set -e
+          for t in tests/test-*.sh; do
+            echo "===== $t ====="
+            bash "$t"
+          done
