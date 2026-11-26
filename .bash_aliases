@@ -10,6 +10,18 @@ for module in ~/.bash_aliases.d/*.sh; do
     fi
 done
 
+# Degrade gracefully on partial/legacy installs: if text.sh isn't present
+# provide a plain-text fallback so show-help and friends still work.
+if ! declare -f text >/dev/null 2>&1; then
+    text() { echo "${1:-}"; }
+fi
+
+# Warn once if the core modules are missing entirely (e.g. only
+# ~/.bash_aliases was installed) instead of dying with 'command not found'.
+if ! declare -f is-git-repo >/dev/null 2>&1; then
+    echo "bash-aliases: modules not found in ~/.bash_aliases.d — re-run the installer to fix." >&2
+fi
+
 
 # Helper function to format help entries
 _help_entry() {
@@ -99,9 +111,11 @@ show-help() {
 }
 
 # Startup logic - check git status if in a git repository
-if is-git-repo; then
+if declare -f is-git-repo >/dev/null 2>&1 && is-git-repo; then
     echo -e "Checked out on \033[01;36m$(current-branch)\033[00m in repo \033[01;36m$(current-repo)\033[00m"
     # check-and-pull queries git directly; no need to run a full `git status`
     # (which is expensive in large repos) on every shell start.
-    check-and-pull "" false
+    if declare -f check-and-pull >/dev/null 2>&1; then
+        check-and-pull "" false
+    fi
 fi
