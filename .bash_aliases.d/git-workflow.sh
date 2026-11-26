@@ -105,22 +105,34 @@ gfo() {
 }
 
 check-and-pull() {
-    local switch_output="$1"
-    local print_output="$2"
+    local switch_output="${1:-}"
+    local print_output="${2:-}"
     if [ -n "${switch_output}" ] && [ "${print_output}" = true ]; then
         echo "${switch_output}"
     fi
-    if echo "${switch_output}" | grep -q "use \"git pull\" to update your local branch"; then
-        local behind_commits=$(echo "${switch_output}" | grep -oP '(?<=by )\d+(?= commits)')
-        echo "Your branch is behind by ${behind_commits} commits."
-        read -r -p "Do you want to run 'git pull'? [y/N] [r]ebase: " confirm_pull
-        if [[ "${confirm_pull}" =~ ^[Yy]$ ]]; then
-            git pull
-        elif [[ "${confirm_pull}" =~ ^[Rr]$ ]]; then
-            git pull --rebase
-        else
-            echo "Skipped 'git pull'."
-        fi
+
+    # Ask git directly instead of parsing human `git status` output — robust
+    # across locales, detects diverged branches, and needs no GNU grep -P.
+    local behind ahead
+    behind=$(git rev-list --count "HEAD..@{upstream}" 2>/dev/null) || return 0
+    ahead=$(git rev-list --count "@{upstream}..HEAD" 2>/dev/null)
+
+    if [ "${behind:-0}" -le 0 ]; then
+        return 0
+    fi
+
+    if [ "${ahead:-0}" -gt 0 ]; then
+        echo "Your branch has diverged from upstream (ahead ${ahead}, behind ${behind})."
+    else
+        echo "Your branch is behind upstream by ${behind} commit(s)."
+    fi
+    read -r -p "Do you want to run 'git pull'? [y/N] [r]ebase: " confirm_pull
+    if [[ "${confirm_pull}" =~ ^[Yy]$ ]]; then
+        git pull
+    elif [[ "${confirm_pull}" =~ ^[Rr]$ ]]; then
+        git pull --rebase
+    else
+        echo "Skipped 'git pull'."
     fi
 }
 
@@ -189,7 +201,7 @@ gitcleanup() {
 
     # Show current remotes for context
     local remotes=$(git remote)
-    local remote_count=$(echo "${remotes}" | wc -l)
+    local remote_count=$(grep -c . <<< "${remotes}")
     echo "Found ${remote_count} remote(s): $(echo "${remotes}" | tr '\n' ' ')"
 
     echo "Fetching and pruning from all remotes..."

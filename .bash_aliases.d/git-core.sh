@@ -9,7 +9,7 @@ get-primary-remote() {
     
     local remotes=$(git remote)
     if [ -z "${remotes}" ]; then
-        echo "No remotes found in this repository."
+        echo "No remotes found in this repository." >&2
         return 1
     fi
     
@@ -44,7 +44,7 @@ is-git-repo() {
 
 check-git-repo() {
     if ! is-git-repo; then
-        echo "Not a git repository."
+        echo "Not a git repository." >&2
         return 1
     fi
 }
@@ -70,7 +70,7 @@ gitmain() {
 
     local repo=$(current-repo)
     if [ -z "${repo}" ]; then
-        echo "Unable to determine repository name."
+        echo "Unable to determine repository name." >&2
         return 1
     fi
 
@@ -85,9 +85,9 @@ gitmain() {
 
     if [ -z "${MAIN_BRANCHES[${repo}]}" ]; then
         local primary_remote
-        primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote."; return 1; }
+        primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote." >&2; return 1; }
         if [ -z "${primary_remote}" ]; then
-            echo "Unable to determine primary remote."
+            echo "Unable to determine primary remote." >&2
             return 1
         fi
         
@@ -124,7 +124,7 @@ commits-on-branch() {
     main=$(gitmain)
     
     if [ -z "${current}" ] || [ -z "${main}" ]; then
-        echo "Unable to determine current or main branch."
+        echo "Unable to determine current or main branch." >&2
         return 1
     fi
 
@@ -190,7 +190,6 @@ sorted-branches-with-main-first() {
     local temp_array
     mapfile -t temp_array < <(printf "%s\n" "${all_branches[@]}" | sort)
     local sorted_branches=("${temp_array[@]}")
-    unset IFS
     # Prepend main/master if found
     if [ -n "${main_branch}" ]; then
         echo "${main_branch}" "${sorted_branches[@]}"
