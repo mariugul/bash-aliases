@@ -57,8 +57,8 @@ grm() {
 
 gps() {
     check-git-repo || return 1
-    local git_push
-    git_push=$(git push 2>&1)
+    local git_push push_status
+    git_push=$(git push 2>&1) && push_status=0 || push_status=$?
 
     if echo "${git_push}" | grep -q "fatal: The current branch"; then
         echo -e "The current branch is not tracking any remote branch.\n"
@@ -67,6 +67,7 @@ gps() {
     fi
 
     echo "${git_push}"
+    return "${push_status}"
 }
 
 gpsupstream() {
