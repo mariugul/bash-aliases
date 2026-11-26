@@ -4,7 +4,7 @@
 
 # Check if shellcheck is installed
 check-shellcheck() {
-    if ! command -v shellcheck &> /dev/null; then
+    if ! command -v shellcheck >/dev/null 2>&1; then
         echo "shellcheck is not installed. Install it with:"
         echo "  Ubuntu/Debian: sudo apt-get install shellcheck"
         echo "  macOS: brew install shellcheck"
@@ -125,20 +125,20 @@ shellcheck-fix() {
 
 # Install shellcheck if not present
 install-shellcheck() {
-    if command -v shellcheck &> /dev/null; then
+    if command -v shellcheck >/dev/null 2>&1; then
         echo "shellcheck is already installed ($(shellcheck --version | head -n1))"
         return 0
     fi
     
     echo "Installing shellcheck..."
     
-    if command -v apt-get &> /dev/null; then
+    if command -v apt-get >/dev/null 2>&1; then
         sudo apt-get update && sudo apt-get install -y shellcheck
-    elif command -v brew &> /dev/null; then
+    elif command -v brew >/dev/null 2>&1; then
         brew install shellcheck
-    elif command -v dnf &> /dev/null; then
+    elif command -v dnf >/dev/null 2>&1; then
         sudo dnf install -y ShellCheck
-    elif command -v yum &> /dev/null; then
+    elif command -v yum >/dev/null 2>&1; then
         sudo yum install -y ShellCheck
     else
         echo "Could not detect package manager. Please install shellcheck manually:"

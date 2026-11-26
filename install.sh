@@ -81,8 +81,10 @@ install_modules() {
     local dev_mode="${1}"
     
     # Get the appropriate modules list
-    local modules
-    readarray -t modules < <(get_modules "${dev_mode}")
+    local modules=() _mod
+    while IFS= read -r _mod; do
+        modules+=("${_mod}")
+    done < <(get_modules "${dev_mode}")
     
     # Create the modules directory
     mkdir -p "${TARGET_DIR}"

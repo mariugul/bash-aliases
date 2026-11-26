@@ -50,5 +50,5 @@ mkcd() {
 }
 
 # Repository management
-alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases &> /dev/null & )'
+alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases >/dev/null 2>&1 & )'
 alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
