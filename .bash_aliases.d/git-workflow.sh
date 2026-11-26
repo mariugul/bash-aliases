@@ -157,8 +157,10 @@ gsw() {
     check-git-repo || return 1
 
     if [ -z "$1" ]; then
-        local all_branches
-        mapfile -t all_branches < <(git branch --format='%(refname:short)')
+        local all_branches=() line
+        while IFS= read -r line; do
+            all_branches+=("${line}")
+        done < <(git branch --format='%(refname:short)')
         # Use helper to sort branches
         local sorted_output
         sorted_output=$(sorted-branches-with-main-first "${all_branches[@]}")
@@ -299,8 +301,10 @@ gitcleanup() {
 gbd() {
     check-git-repo || return 1
 
-    local all_branches
-    mapfile -t all_branches < <(git branch --format='%(refname:short)')
+    local all_branches=() line
+    while IFS= read -r line; do
+        all_branches+=("${line}")
+    done < <(git branch --format='%(refname:short)')
     # Use helper to sort branches
     local sorted_output
     sorted_output=$(sorted-branches-with-main-first "${all_branches[@]}")
@@ -434,7 +438,7 @@ sync-fork() {
         echo "Currently on branch '${current_branch}', switching to '${main_branch}' for syncing..."
     fi
 
-    if ! git remote get-url upstream &> /dev/null; then
+    if ! git remote get-url upstream >/dev/null 2>&1; then
         echo "Error: 'upstream' remote does not exist."
         echo "Please add it by running 'git remote add upstream https://github.com/original-repo-url.git'"
         echo "It's expected that the upstream remote points to the original repository and the forked repository is added as 'origin'."
@@ -443,7 +447,7 @@ sync-fork() {
 
     # For sync-fork, we specifically want to push to origin (the fork)
     # even if upstream is the primary remote for other operations
-    if ! git remote get-url origin &> /dev/null; then
+    if ! git remote get-url origin >/dev/null 2>&1; then
         echo "Error: 'origin' remote does not exist."
         echo "For fork syncing, 'origin' should point to your fork."
         return 1

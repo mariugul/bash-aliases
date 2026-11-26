@@ -58,46 +58,63 @@ current-branch() {
 MAIN_BRANCHES_FILE="${HOME}/.cache/bash-aliases/main_branches"
 mkdir -p "$(dirname "${MAIN_BRANCHES_FILE}")" 2>/dev/null
 
-# Load MAIN_BRANCHES from file if it exists
-if [ -f "${MAIN_BRANCHES_FILE}" ]; then
-    # shellcheck source=/dev/null
-    source "${MAIN_BRANCHES_FILE}"
-else
-    declare -A MAIN_BRANCHES
-fi
+# Main-branch cache: one "repo=branch" line per repo. A flat file is used
+# rather than an associative array so this works on bash 3.2 (stock macOS).
+_mainbranch_cached() {
+    [ -f "${MAIN_BRANCHES_FILE}" ] || return 1
+    awk -v k="${1}=" 'index($0, k) == 1 { print substr($0, length(k) + 1); exit }' \
+        "${MAIN_BRANCHES_FILE}"
+}
+
+_mainbranch_forget() {
+    [ -f "${MAIN_BRANCHES_FILE}" ] || return 0
+    awk -v k="${1}=" 'index($0, k) != 1' "${MAIN_BRANCHES_FILE}" \
+        > "${MAIN_BRANCHES_FILE}.tmp"
+    if [ -s "${MAIN_BRANCHES_FILE}.tmp" ]; then
+        mv "${MAIN_BRANCHES_FILE}.tmp" "${MAIN_BRANCHES_FILE}"
+    else
+        rm -f "${MAIN_BRANCHES_FILE}.tmp" "${MAIN_BRANCHES_FILE}"
+    fi
+}
+
+_mainbranch_set() {
+    _mainbranch_forget "${1}"
+    printf '%s=%s\n' "${1}" "${2}" >> "${MAIN_BRANCHES_FILE}"
+}
 
 # shellcheck disable=SC2120
 gitmain() {
     check-git-repo || return 1
 
-    local repo=$(current-repo)
+    local repo
+    repo=$(current-repo)
     if [ -z "${repo}" ]; then
         echo "Unable to determine repository name." >&2
         return 1
     fi
 
     if [ "${1:-}" = "--refresh" ]; then
-        unset "MAIN_BRANCHES[${repo}]"
-        rm -f "${MAIN_BRANCHES_FILE}"
+        _mainbranch_forget "${repo}"
     elif [ "${1:-}" = "--refresh-all" ]; then
-        unset MAIN_BRANCHES
-        declare -gA MAIN_BRANCHES
         rm -f "${MAIN_BRANCHES_FILE}"
     fi
 
-    if [ -z "${MAIN_BRANCHES[${repo}]:-}" ]; then
+    local main_branch
+    main_branch=$(_mainbranch_cached "${repo}")
+    if [ -z "${main_branch}" ]; then
         local primary_remote
         primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote." >&2; return 1; }
         if [ -z "${primary_remote}" ]; then
             echo "Unable to determine primary remote." >&2
             return 1
         fi
-        
+
         # Try to get the default branch from the remote
-        local main_branch=$(git remote show "${primary_remote}" 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}')
-        
+        main_branch=$(git remote show "${primary_remote}" 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}')
+
         # If that fails, try common main branch names that exist locally
         if [ -z "${main_branch}" ] || [ "${main_branch}" = "(unknown)" ]; then
+            local branch
             for branch in main master develop; do
                 if git show-ref --verify --quiet "refs/heads/${branch}"; then
                     main_branch="${branch}"
@@ -105,16 +122,15 @@ gitmain() {
                 fi
             done
         fi
-        
+
         # If still no main branch found, default to 'main'
         if [ -z "${main_branch}" ]; then
             main_branch="main"
         fi
-        
-        MAIN_BRANCHES[${repo}]="${main_branch}"
-        declare -p MAIN_BRANCHES > "${MAIN_BRANCHES_FILE}"
+
+        _mainbranch_set "${repo}" "${main_branch}"
     fi
-    echo "${MAIN_BRANCHES[${repo}]}"
+    echo "${main_branch}"
 }
 
 commits-on-branch() {
@@ -189,8 +205,10 @@ sorted-branches-with-main-first() {
         done
     done
     # Sort the rest
-    local temp_array
-    mapfile -t temp_array < <(printf "%s\n" "${all_branches[@]}" | sort)
+    local temp_array=() line
+    while IFS= read -r line; do
+        temp_array+=("${line}")
+    done < <(printf "%s\n" "${all_branches[@]}" | sort)
     local sorted_branches=("${temp_array[@]}")
     # Prepend main/master if found
     if [ -n "${main_branch}" ]; then
