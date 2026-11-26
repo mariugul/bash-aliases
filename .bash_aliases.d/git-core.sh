@@ -35,7 +35,9 @@ current-repo() {
     if [ -z "${primary_remote}" ]; then
         return 1
     fi
-    git remote get-url "${primary_remote}" 2> /dev/null | sed -nE 's#.*[:/]([^/]+)/([^/.]+)(\.git)?$#\1/\2#p'
+    git remote get-url "${primary_remote}" 2> /dev/null \
+        | sed -nE 's#.*[:/]([^/]+)/([^/]+)$#\1/\2#p' \
+        | sed 's/\.git$//'
 }
 
 is-git-repo() {
