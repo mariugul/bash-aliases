@@ -57,8 +57,8 @@ grm() {
 
 gps() {
     check-git-repo || return 1
-    local git_push
-    git_push=$(git push 2>&1)
+    local git_push push_status
+    git_push=$(git push 2>&1) && push_status=0 || push_status=$?
 
     if echo "${git_push}" | grep -q "fatal: The current branch"; then
         echo -e "The current branch is not tracking any remote branch.\n"
@@ -67,6 +67,7 @@ gps() {
     fi
 
     echo "${git_push}"
+    return "${push_status}"
 }
 
 gpsupstream() {
@@ -94,14 +95,22 @@ gpsupstream() {
 gfo() {
     check-git-repo || return 1
 
-    local primary_remote
+    local primary_remote main_branch
     primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote."; return 1; }
     if [ -z "${primary_remote}" ]; then
         echo "Unable to determine primary remote."
         return 1
     fi
-    
-    git fetch "${primary_remote}" "$(gitmain):$(gitmain)"
+    main_branch=$(gitmain) || return 1
+
+    if [ "$(current-branch)" = "${main_branch}" ]; then
+        # main is checked out here: fetching "main:main" is refused.
+        # Update the remote-tracking ref and fast-forward instead.
+        git fetch "${primary_remote}" "${main_branch}" || return 1
+        git merge --ff-only "${primary_remote}/${main_branch}"
+    else
+        git fetch "${primary_remote}" "${main_branch}:${main_branch}"
+    fi
 }
 
 check-and-pull() {
@@ -414,8 +423,8 @@ gbd() {
 sync-fork() {
     check-git-repo || return 1
 
-    local main_branch=$(gitmain)
-    if [ -z "${main_branch}" ]; then
+    local main_branch
+    if ! main_branch=$(gitmain); then
         echo "Failed to determine the main branch."
         return 1
     fi
@@ -453,13 +462,22 @@ sync-fork() {
     fi
 
     echo "Fetching upstream..."
-    git fetch upstream
+    if ! git fetch upstream; then
+        echo "Error: failed to fetch 'upstream'. Nothing was pushed."
+        return 1
+    fi
 
     echo "Rebasing upstream/${main_branch} onto ${main_branch}..."
-    git rebase upstream/${main_branch} ${main_branch}
+    if ! git rebase "upstream/${main_branch}" "${main_branch}"; then
+        echo "Error: rebase failed. Resolve conflicts, or run 'git rebase --abort' to cancel."
+        return 1
+    fi
 
-    echo "Force pushing ${main_branch} to origin (your fork)..."
-    git push origin ${main_branch} --force
+    # --force-with-lease refuses the push if origin moved since our last
+    # fetch, instead of silently clobbering someone else's commits.
+    echo "Force pushing ${main_branch} to origin (your fork, --force-with-lease)..."
+    local push_ok=true
+    git push origin "${main_branch}" --force-with-lease || push_ok=false
 
     # Switch back to original branch if we switched away from it
     if [ "${needs_branch_switch}" = true ]; then
@@ -468,6 +486,11 @@ sync-fork() {
             echo "Warning: Failed to switch back to '${current_branch}'. You are currently on '${main_branch}'."
             return 1
         fi
+    fi
+
+    if [ "${push_ok}" = false ]; then
+        echo "Error: push refused. Origin moved since last fetch — re-fetch and retry."
+        return 1
     fi
 }
 

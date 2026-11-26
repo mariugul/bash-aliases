@@ -36,46 +36,25 @@ shellcheck-file() {
 # Run shellcheck on all bash scripts in current directory
 shellcheck-all() {
     check-shellcheck || return 1
-    
+
     local files_found=0
     local files_with_issues=0
-    
+    local script
+
     echo "Running shellcheck on all bash scripts..."
     echo "=================================="
-    
-    # Check .bash_aliases if it exists
-    if [[ -f ".bash_aliases" ]]; then
-        echo "Checking .bash_aliases..."
-        if ! shellcheck ".bash_aliases"; then
+
+    # Discover all shell scripts: *.sh anywhere (including .bash_aliases.d/
+    # and tests/), plus the extensionless .bash_aliases. .git is excluded.
+    while IFS= read -r script; do
+        echo "Checking ${script}..."
+        if ! shellcheck -x "${script}"; then
             ((files_with_issues++))
         fi
         ((files_found++))
         echo ""
-    fi
-    
-    # Check install.sh if it exists
-    if [[ -f "install.sh" ]]; then
-        echo "Checking install.sh..."
-        if ! shellcheck "install.sh"; then
-            ((files_with_issues++))
-        fi
-        ((files_found++))
-        echo ""
-    fi
-    
-    # Check all .sh files in .bash_aliases.d/
-    if [[ -d ".bash_aliases.d" ]]; then
-        for script in .bash_aliases.d/*.sh; do
-            if [[ -f "${script}" ]]; then
-                echo "Checking ${script}..."
-                if ! shellcheck "${script}"; then
-                    ((files_with_issues++))
-                fi
-                ((files_found++))
-                echo ""
-            fi
-        done
-    fi
+    done < <(find . -path './.git' -prune -o -type f \
+        \( -name '*.sh' -o -name '.bash_aliases' \) -print | sort)
     
     # Summary
     echo "=================================="
