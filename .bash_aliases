@@ -29,8 +29,9 @@ _help_header() {
 
 # Show help for commands
 show-help() {
-    local main_branch=$(gitmain)
-    local current_branch=$(current-branch)
+    local main_branch current_branch
+    main_branch=$(gitmain 2>/dev/null)
+    current_branch=$(current-branch 2>/dev/null)
 
     echo -e "Available Commands:\n"
     _help_header "General Commands"
@@ -100,6 +101,7 @@ show-help() {
 # Startup logic - check git status if in a git repository
 if is-git-repo; then
     echo -e "Checked out on \033[01;36m$(current-branch)\033[00m in repo \033[01;36m$(current-repo)\033[00m"
-    git_status=$(git status)
-    check-and-pull "${git_status}" false
+    # check-and-pull queries git directly; no need to run a full `git status`
+    # (which is expensive in large repos) on every shell start.
+    check-and-pull "" false
 fi

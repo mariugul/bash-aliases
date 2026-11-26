@@ -121,7 +121,7 @@ install_modules() {
 backup_and_replace() {
     cp "${TARGET}" "${TARGET}.bak"
     echo " - Backup of existing .bash_aliases created at ${TARGET}.bak"
-    if [ "${dev_mode}" == "--dev" ] || [ "${1}" == "r" ]; then
+    if [ "${dev_mode}" == "--dev" ]; then
         cp "${LOCAL_FILE}" "${TARGET}"
         echo " - Replaced existing .bash_aliases with the local one."
     else
