@@ -74,16 +74,16 @@ gitmain() {
         return 1
     fi
 
-    if [ "$1" = "--refresh" ]; then
+    if [ "${1:-}" = "--refresh" ]; then
         unset "MAIN_BRANCHES[${repo}]"
         rm -f "${MAIN_BRANCHES_FILE}"
-    elif [ "$1" = "--refresh-all" ]; then
+    elif [ "${1:-}" = "--refresh-all" ]; then
         unset MAIN_BRANCHES
         declare -gA MAIN_BRANCHES
         rm -f "${MAIN_BRANCHES_FILE}"
     fi
 
-    if [ -z "${MAIN_BRANCHES[${repo}]}" ]; then
+    if [ -z "${MAIN_BRANCHES[${repo}]:-}" ]; then
         local primary_remote
         primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote."; return 1; }
         if [ -z "${primary_remote}" ]; then

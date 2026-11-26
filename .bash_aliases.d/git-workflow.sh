@@ -94,14 +94,22 @@ gpsupstream() {
 gfo() {
     check-git-repo || return 1
 
-    local primary_remote
+    local primary_remote main_branch
     primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote."; return 1; }
     if [ -z "${primary_remote}" ]; then
         echo "Unable to determine primary remote."
         return 1
     fi
-    
-    git fetch "${primary_remote}" "$(gitmain):$(gitmain)"
+    main_branch=$(gitmain) || return 1
+
+    if [ "$(current-branch)" = "${main_branch}" ]; then
+        # main is checked out here: fetching "main:main" is refused.
+        # Update the remote-tracking ref and fast-forward instead.
+        git fetch "${primary_remote}" "${main_branch}" || return 1
+        git merge --ff-only "${primary_remote}/${main_branch}"
+    else
+        git fetch "${primary_remote}" "${main_branch}:${main_branch}"
+    fi
 }
 
 check-and-pull() {
