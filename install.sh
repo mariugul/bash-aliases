@@ -5,6 +5,7 @@ set -e
 # Define target files and directories
 TARGET="${HOME}/.bash_aliases"
 TARGET_DIR="${HOME}/.bash_aliases.d"
+MANIFEST="${TARGET_DIR}/.manifest"
 URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases"
 
 # Anchor --dev paths to this script's directory so it works from any CWD
@@ -122,14 +123,28 @@ ensure_profile() {
 
 install_modules() {
     local dev_mode="${1}"
-    
+
     # Get the appropriate modules list
     local modules
     readarray -t modules < <(get_modules "${dev_mode}")
-    
+
     # Create the modules directory
     mkdir -p "${TARGET_DIR}"
-    
+
+    # Remove modules we installed before that are no longer in the list.
+    # Only manifest-tracked files are touched — user files in the directory
+    # are preserved.
+    if [ -f "${MANIFEST}" ]; then
+        local stale
+        while IFS= read -r stale; do
+            if ! printf '%s\n' "${modules[@]}" | grep -qx "${stale}" \
+                && [ -f "${TARGET_DIR}/${stale}" ]; then
+                rm -f "${TARGET_DIR}/${stale}"
+                echo " - Removed stale module: ${stale}"
+            fi
+        done < "${MANIFEST}"
+    fi
+
     if [ "${dev_mode}" == "--dev" ]; then
         # Copy local modules
         if [ -d "${LOCAL_DIR}" ]; then
@@ -159,6 +174,10 @@ install_modules() {
         # Note: shellcheck.sh and .shellcheckrc are not downloaded in regular installs
         echo " - Skipped shellcheck module (use --dev for development tools)"
     fi
+
+    # Record what we installed so upgrades can drop removed modules and the
+    # uninstaller knows exactly what it owns.
+    printf '%s\n' "${modules[@]}" > "${MANIFEST}"
 }
 
 backup_and_replace() {
@@ -177,7 +196,11 @@ backup_and_replace() {
 }
 
 append_to_existing() {
-    if [ "${1}" == "--dev" ]; then
+    if grep -q "Source all modules" "${TARGET}" 2>/dev/null; then
+        # The file already contains the full aliases + loader; appending
+        # again would duplicate everything including the startup hook.
+        echo " - .bash_aliases already contains the module loader; skipping append."
+    elif [ "${1}" == "--dev" ]; then
         cat "${LOCAL_FILE}" >> "${TARGET}"
         echo "Appended local aliases to existing .bash_aliases."
     else
