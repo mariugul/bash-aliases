@@ -96,11 +96,11 @@ ensure_bash_profile() {
     fi
 }
 
-# Download a file with curl
+# Download a file with curl (fail on HTTP errors, retry transient failures)
 download_file() {
     local url="$1"
     local output="$2"
-    curl -sSLo "${output}" "${url}"
+    curl -fsSL --retry 2 -o "${output}" "${url}"
 }
 
 install_modules() {
@@ -126,7 +126,7 @@ backup_and_replace() {
 }
 
 append_to_existing() {
-    curl -sS "${URL}" >> "${TARGET}"
+    curl -fsSL --retry 2 "${URL}" >> "${TARGET}"
     echo "Appended new aliases to existing .bash_aliases."
 
     # Install modules (will create directory if needed)
