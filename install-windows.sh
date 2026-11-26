@@ -14,8 +14,10 @@ MODULES_URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/
 # Base module files to install
 BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh")
 
-# Git Bash profile file
-BASH_PROFILE="${HOME}/.bash_profile"
+# Git Bash profile files, in bash's source order. Bash/Git-Bash reads the
+# FIRST existing one, so creating .bash_profile would silently shadow a
+# user's existing .profile — always prefer the first file that exists.
+PROFILE_CANDIDATES=("${HOME}/.bash_profile" "${HOME}/.bash_login" "${HOME}/.profile")
 
 show_help() {
     echo "Bash Aliases Installer for Windows (Git Bash)"
@@ -65,31 +67,40 @@ for arg in "${@}"; do
     esac
 done
 
-# Ensure .bash_profile sources .bash_aliases
+# Ensure the user's bash profile sources .bash_aliases
 ensure_bash_profile() {
-    if [ ! -f "${BASH_PROFILE}" ]; then
-        echo "Creating ${BASH_PROFILE}..."
-        touch "${BASH_PROFILE}"
+    local profile_file=""
+    for candidate in "${PROFILE_CANDIDATES[@]}"; do
+        if [ -f "${candidate}" ]; then
+            profile_file="${candidate}"
+            break
+        fi
+    done
+
+    if [ -z "${profile_file}" ]; then
+        profile_file="${PROFILE_CANDIDATES[0]}"
+        echo "Creating ${profile_file}..."
+        touch "${profile_file}"
     fi
 
     # Check if .bash_aliases is already sourced
-    if ! grep -q "source.*\.bash_aliases" "${BASH_PROFILE}" 2>/dev/null; then
+    if ! grep -q "source.*\.bash_aliases" "${profile_file}" 2>/dev/null; then
         {
             echo ""
             echo "# Source bash aliases"
             echo "if [ -f ~/.bash_aliases ]; then"
             echo "    source ~/.bash_aliases"
             echo "fi"
-        } >> "${BASH_PROFILE}"
-        echo "Added .bash_aliases source to ${BASH_PROFILE}"
+        } >> "${profile_file}"
+        echo "Added .bash_aliases source to ${profile_file}"
     fi
 }
 
-# Download a file with curl
+# Download a file with curl (fail on HTTP errors, retry transient failures)
 download_file() {
     local url="$1"
     local output="$2"
-    curl -sSLo "${output}" "${url}"
+    curl -fsSL --retry 2 -o "${output}" "${url}"
 }
 
 install_modules() {
@@ -115,7 +126,7 @@ backup_and_replace() {
 }
 
 append_to_existing() {
-    curl -sS "${URL}" >> "${TARGET}"
+    curl -fsSL --retry 2 "${URL}" >> "${TARGET}"
     echo "Appended new aliases to existing .bash_aliases."
 
     # Install modules (will create directory if needed)
@@ -132,7 +143,7 @@ download_new() {
 
 echo "Installing bash aliases for Windows (Git Bash)..."
 
-# Ensure .bash_profile is set up
+# Ensure the user's profile is set up
 ensure_bash_profile
 
 # Handle existing .bash_aliases file
@@ -171,6 +182,6 @@ fi
 
 echo -e "\nBash aliases installed!"
 echo -e "\nPlease run one of the following to apply changes:"
-echo "  source ~/.bash_profile"
+echo "  source your bash profile (~/.bash_profile, ~/.bash_login or ~/.profile)"
 echo "  source ~/.bash_aliases"
 echo "Or restart your Git Bash terminal."

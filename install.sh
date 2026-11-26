@@ -1,11 +1,24 @@
 #!/bin/bash
 
+set -e
+
 # Define target files and directories
 TARGET="${HOME}/.bash_aliases"
 TARGET_DIR="${HOME}/.bash_aliases.d"
 URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases"
-LOCAL_FILE="./.bash_aliases"
-LOCAL_DIR="./.bash_aliases.d"
+
+# Anchor --dev paths to this script's directory so it works from any CWD
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCAL_FILE="${SCRIPT_DIR}/.bash_aliases"
+LOCAL_DIR="${SCRIPT_DIR}/.bash_aliases.d"
+LOCAL_SHELLCHECKRC="${SCRIPT_DIR}/.shellcheckrc"
+
+# Profile files checked for the .bash_aliases source block, in preference
+# order. The first existing file wins; ~/.bashrc is created if none exist.
+PROFILE_CANDIDATES=("${HOME}/.bashrc" "${HOME}/.bash_profile" "${HOME}/.bash_login" "${HOME}/.profile")
+
+# curl flags: fail on HTTP errors, retry transient failures
+CURL=(curl -fsSL --retry 2)
 
 # Base module files to install
 BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh")
@@ -77,6 +90,36 @@ for arg in "${@}"; do
     esac
 done
 
+# Ensure the user's shell profile sources ~/.bash_aliases — without this
+# the install is silently inert on any setup whose profile doesn't already
+# source it (non-Ubuntu distros, custom dotfiles, headless logins).
+ensure_profile() {
+    local profile_file=""
+    for candidate in "${PROFILE_CANDIDATES[@]}"; do
+        if [ -f "${candidate}" ]; then
+            profile_file="${candidate}"
+            break
+        fi
+    done
+
+    if [ -z "${profile_file}" ]; then
+        profile_file="${PROFILE_CANDIDATES[0]}"
+        echo "Creating ${profile_file}..."
+        touch "${profile_file}"
+    fi
+
+    if ! grep -q "source.*\.bash_aliases" "${profile_file}" 2>/dev/null; then
+        {
+            echo ""
+            echo "# Source bash aliases"
+            echo "if [ -f ~/.bash_aliases ]; then"
+            echo "    source ~/.bash_aliases"
+            echo "fi"
+        } >> "${profile_file}"
+        echo " - Added .bash_aliases source to ${profile_file}"
+    fi
+}
+
 install_modules() {
     local dev_mode="${1}"
     
@@ -101,15 +144,15 @@ install_modules() {
         fi
         
         # Copy shellcheck configuration if it exists locally (only in dev mode)
-        if [ -f "./.shellcheckrc" ]; then
-            cp "./.shellcheckrc" "${HOME}/.shellcheckrc"
+        if [ -f "${LOCAL_SHELLCHECKRC}" ]; then
+            cp "${LOCAL_SHELLCHECKRC}" "${HOME}/.shellcheckrc"
             echo " - Installed .shellcheckrc configuration"
         fi
     else
         # Download modules from repository
         for module in "${modules[@]}"; do
             local module_url="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases.d/${module}"
-            curl -sSLo "${TARGET_DIR}/${module}" "${module_url}"
+            "${CURL[@]}" -o "${TARGET_DIR}/${module}" "${module_url}"
             echo " - Downloaded module: ${module}"
         done
         
@@ -121,11 +164,11 @@ install_modules() {
 backup_and_replace() {
     cp "${TARGET}" "${TARGET}.bak"
     echo " - Backup of existing .bash_aliases created at ${TARGET}.bak"
-    if [ "${dev_mode}" == "--dev" ] || [ "${1}" == "r" ]; then
+    if [ "${dev_mode}" == "--dev" ]; then
         cp "${LOCAL_FILE}" "${TARGET}"
         echo " - Replaced existing .bash_aliases with the local one."
     else
-        curl -sSLo "${TARGET}" "${URL}"
+        "${CURL[@]}" -o "${TARGET}" "${URL}"
         echo " - Replaced existing .bash_aliases with the new one."
     fi
     
@@ -138,7 +181,7 @@ append_to_existing() {
         cat "${LOCAL_FILE}" >> "${TARGET}"
         echo "Appended local aliases to existing .bash_aliases."
     else
-        curl -sS "${URL}" >> "${TARGET}"
+        "${CURL[@]}" "${URL}" >> "${TARGET}"
         echo "Appended new aliases to existing .bash_aliases."
     fi
     
@@ -151,7 +194,7 @@ download_new() {
         cp "${LOCAL_FILE}" "${TARGET}"
         echo "Copied local .bash_aliases."
     else
-        curl -sSLo "${TARGET}" "${URL}"
+        "${CURL[@]}" -o "${TARGET}" "${URL}"
         echo "Downloaded new .bash_aliases."
     fi
     
@@ -177,7 +220,7 @@ if [ -f "${TARGET}" ]; then
         esac
     else
         # Interactive mode
-        read -r -p "Do you want to (a)ppend to it or (r)eplace it? " choice
+        read -r -p "Do you want to (a)ppend to it or (r)eplace it? " choice || true
         case "${choice}" in
             a|A)
                 append_to_existing "${dev_mode}"
@@ -195,5 +238,8 @@ else
     download_new "${dev_mode}"
 fi
 
+# Wire .bash_aliases into the user's profile (no-op if already sourced)
+ensure_profile
+
 echo -e "\nBash aliases installed!"
-echo -e "\nPlease run 'source ~/.bashrc' to apply changes to your current session."
+echo -e "\nPlease run 'source' on your shell profile (e.g. 'source ~/.bashrc') or open a new shell to apply changes."

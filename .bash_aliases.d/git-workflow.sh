@@ -57,8 +57,8 @@ grm() {
 
 gps() {
     check-git-repo || return 1
-    local git_push
-    git_push=$(git push 2>&1)
+    local git_push push_status
+    git_push=$(git push 2>&1) && push_status=0 || push_status=$?
 
     if echo "${git_push}" | grep -q "fatal: The current branch"; then
         echo -e "The current branch is not tracking any remote branch.\n"
@@ -67,6 +67,7 @@ gps() {
     fi
 
     echo "${git_push}"
+    return "${push_status}"
 }
 
 gpsupstream() {
@@ -94,33 +95,53 @@ gpsupstream() {
 gfo() {
     check-git-repo || return 1
 
-    local primary_remote
+    local primary_remote main_branch
     primary_remote=$(get-primary-remote) || { echo "Unable to determine primary remote."; return 1; }
     if [ -z "${primary_remote}" ]; then
         echo "Unable to determine primary remote."
         return 1
     fi
-    
-    git fetch "${primary_remote}" "$(gitmain):$(gitmain)"
+    main_branch=$(gitmain) || return 1
+
+    if [ "$(current-branch)" = "${main_branch}" ]; then
+        # main is checked out here: fetching "main:main" is refused.
+        # Update the remote-tracking ref and fast-forward instead.
+        git fetch "${primary_remote}" "${main_branch}" || return 1
+        git merge --ff-only "${primary_remote}/${main_branch}"
+    else
+        git fetch "${primary_remote}" "${main_branch}:${main_branch}"
+    fi
 }
 
 check-and-pull() {
-    local switch_output="$1"
-    local print_output="$2"
+    local switch_output="${1:-}"
+    local print_output="${2:-}"
     if [ -n "${switch_output}" ] && [ "${print_output}" = true ]; then
         echo "${switch_output}"
     fi
-    if echo "${switch_output}" | grep -q "use \"git pull\" to update your local branch"; then
-        local behind_commits=$(echo "${switch_output}" | grep -oP '(?<=by )\d+(?= commits)')
-        echo "Your branch is behind by ${behind_commits} commits."
-        read -r -p "Do you want to run 'git pull'? [y/N] [r]ebase: " confirm_pull
-        if [[ "${confirm_pull}" =~ ^[Yy]$ ]]; then
-            git pull
-        elif [[ "${confirm_pull}" =~ ^[Rr]$ ]]; then
-            git pull --rebase
-        else
-            echo "Skipped 'git pull'."
-        fi
+
+    # Ask git directly instead of parsing human `git status` output — robust
+    # across locales, detects diverged branches, and needs no GNU grep -P.
+    local behind ahead
+    behind=$(git rev-list --count "HEAD..@{upstream}" 2>/dev/null) || return 0
+    ahead=$(git rev-list --count "@{upstream}..HEAD" 2>/dev/null)
+
+    if [ "${behind:-0}" -le 0 ]; then
+        return 0
+    fi
+
+    if [ "${ahead:-0}" -gt 0 ]; then
+        echo "Your branch has diverged from upstream (ahead ${ahead}, behind ${behind})."
+    else
+        echo "Your branch is behind upstream by ${behind} commit(s)."
+    fi
+    read -r -p "Do you want to run 'git pull'? [y/N] [r]ebase: " confirm_pull
+    if [[ "${confirm_pull}" =~ ^[Yy]$ ]]; then
+        git pull
+    elif [[ "${confirm_pull}" =~ ^[Rr]$ ]]; then
+        git pull --rebase
+    else
+        echo "Skipped 'git pull'."
     fi
 }
 
@@ -189,7 +210,7 @@ gitcleanup() {
 
     # Show current remotes for context
     local remotes=$(git remote)
-    local remote_count=$(echo "${remotes}" | wc -l)
+    local remote_count=$(grep -c . <<< "${remotes}")
     echo "Found ${remote_count} remote(s): $(echo "${remotes}" | tr '\n' ' ')"
 
     echo "Fetching and pruning from all remotes..."
@@ -398,8 +419,8 @@ gbd() {
 sync-fork() {
     check-git-repo || return 1
 
-    local main_branch=$(gitmain)
-    if [ -z "${main_branch}" ]; then
+    local main_branch
+    if ! main_branch=$(gitmain); then
         echo "Failed to determine the main branch."
         return 1
     fi
@@ -437,13 +458,22 @@ sync-fork() {
     fi
 
     echo "Fetching upstream..."
-    git fetch upstream
+    if ! git fetch upstream; then
+        echo "Error: failed to fetch 'upstream'. Nothing was pushed."
+        return 1
+    fi
 
     echo "Rebasing upstream/${main_branch} onto ${main_branch}..."
-    git rebase upstream/${main_branch} ${main_branch}
+    if ! git rebase "upstream/${main_branch}" "${main_branch}"; then
+        echo "Error: rebase failed. Resolve conflicts, or run 'git rebase --abort' to cancel."
+        return 1
+    fi
 
-    echo "Force pushing ${main_branch} to origin (your fork)..."
-    git push origin ${main_branch} --force
+    # --force-with-lease refuses the push if origin moved since our last
+    # fetch, instead of silently clobbering someone else's commits.
+    echo "Force pushing ${main_branch} to origin (your fork, --force-with-lease)..."
+    local push_ok=true
+    git push origin "${main_branch}" --force-with-lease || push_ok=false
 
     # Switch back to original branch if we switched away from it
     if [ "${needs_branch_switch}" = true ]; then
@@ -452,6 +482,11 @@ sync-fork() {
             echo "Warning: Failed to switch back to '${current_branch}'. You are currently on '${main_branch}'."
             return 1
         fi
+    fi
+
+    if [ "${push_ok}" = false ]; then
+        echo "Error: push refused. Origin moved since last fetch — re-fetch and retry."
+        return 1
     fi
 }
 
