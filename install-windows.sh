@@ -74,11 +74,13 @@ ensure_bash_profile() {
 
     # Check if .bash_aliases is already sourced
     if ! grep -q "source.*\.bash_aliases" "${BASH_PROFILE}" 2>/dev/null; then
-        echo "" >> "${BASH_PROFILE}"
-        echo "# Source bash aliases" >> "${BASH_PROFILE}"
-        echo "if [ -f ~/.bash_aliases ]; then" >> "${BASH_PROFILE}"
-        echo "    source ~/.bash_aliases" >> "${BASH_PROFILE}"
-        echo "fi" >> "${BASH_PROFILE}"
+        {
+            echo ""
+            echo "# Source bash aliases"
+            echo "if [ -f ~/.bash_aliases ]; then"
+            echo "    source ~/.bash_aliases"
+            echo "fi"
+        } >> "${BASH_PROFILE}"
         echo "Added .bash_aliases source to ${BASH_PROFILE}"
     fi
 }
