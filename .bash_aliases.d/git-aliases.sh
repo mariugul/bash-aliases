@@ -68,5 +68,4 @@ gc-release-as() {
     git commit --allow-empty -m "chore($(gitmain)): release ${version}" -m "Release-As: ${version}"
 }
 
-# GitHub CLI aliases
-alias prview="echo 'Opening PR in browser.' && gh pr view -w > /dev/null 2>&1 & disown"
+# prview lives in git-workflow.sh (it picks gh or fj per remote)
