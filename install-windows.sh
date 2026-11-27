@@ -12,7 +12,7 @@ URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.ba
 MODULES_URL="https://raw.githubusercontent.com/mariugul/bash-aliases/refs/heads/main/.bash_aliases.d"
 
 # Base module files to install
-BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh")
+BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh" "maintenance.sh")
 
 # Git Bash profile files, in bash's source order. Bash/Git-Bash reads the
 # FIRST existing one, so creating .bash_profile would silently shadow a
