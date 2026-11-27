@@ -22,7 +22,7 @@ PROFILE_CANDIDATES=("${HOME}/.bashrc" "${HOME}/.bash_profile" "${HOME}/.bash_log
 CURL=(curl -fsSL --retry 2)
 
 # Base module files to install
-BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh")
+BASE_MODULES=("git-core.sh" "git-workflow.sh" "git-aliases.sh" "system.sh" "text.sh" "maintenance.sh")
 
 # Get modules list based on dev mode
 get_modules() {
