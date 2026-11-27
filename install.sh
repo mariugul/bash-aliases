@@ -125,9 +125,10 @@ install_modules() {
     local dev_mode="${1}"
 
     # Get the appropriate modules list
-    local modules
-    readarray -t modules < <(get_modules "${dev_mode}")
-
+    local modules=() _mod
+    while IFS= read -r _mod; do
+        modules+=("${_mod}")
+    done < <(get_modules "${dev_mode}")
     # Create the modules directory
     mkdir -p "${TARGET_DIR}"
 
@@ -183,7 +184,7 @@ install_modules() {
 backup_and_replace() {
     cp "${TARGET}" "${TARGET}.bak"
     echo " - Backup of existing .bash_aliases created at ${TARGET}.bak"
-    if [ "${dev_mode}" == "--dev" ] || [ "${1}" == "r" ]; then
+    if [ "${dev_mode}" == "--dev" ]; then
         cp "${LOCAL_FILE}" "${TARGET}"
         echo " - Replaced existing .bash_aliases with the local one."
     else

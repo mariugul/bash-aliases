@@ -4,17 +4,35 @@
 
 # Utility function for adding aliases
 alias-add() {
-    # shellcheck source=/dev/null
-    if ! grep -q "alias ${1}=" ~/.bash_aliases; then
-        echo "alias ${1}='${2}'" >> ~/.bash_aliases
-        # shellcheck source=/dev/null
-        source ~/.bash_aliases
-    else
-        echo "Alias ${1} already exists."
+    local name="${1:-}" command="${2:-}"
+
+    if [[ -z "${name}" || -z "${command}" ]]; then
+        echo "Usage: alias-add <alias_name> <command>" >&2
+        return 1
+    fi
+
+    # Bash allows dots/dashes in alias names (e.g. apt-update, g.x); reject
+    # everything else (whitespace, shell metacharacters, '=').
+    if [[ ! "${name}" =~ ^[a-zA-Z_][a-zA-Z0-9._-]*$ ]]; then
+        echo "Invalid alias name '${name}'." >&2
+        return 1
+    fi
+
+    # Anchored, literal duplicate check — no regex interpretation of the name.
+    if awk -v prefix="alias ${name}=" 'index($0, prefix) == 1 { found = 1 } END { exit !found }' \
+        ~/.bash_aliases 2>/dev/null; then
+        echo "Alias ${name} already exists."
         return 0
     fi
+
+    # Write the command in single quotes, escaping embedded quotes so the
+    # file stays valid bash: it's -> 'it'\''s'
+    local escaped="${command//\'/\'\\\'\'}"
+    printf "alias %s='%s'\n" "${name}" "${escaped}" >> ~/.bash_aliases
+
     # shellcheck source=/dev/null
     source ~/.bash_aliases
+    echo "Alias ${name} added."
 }
 
 # Directory navigation aliases
@@ -50,5 +68,5 @@ mkcd() {
 }
 
 # Repository management
-alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases &> /dev/null & )'
+alias open-alias-repo='( xdg-open https://github.com/mariugul/bash-aliases >/dev/null 2>&1 & )'
 alias upgrade-aliases='bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install.sh)'
