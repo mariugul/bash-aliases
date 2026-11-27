@@ -153,34 +153,43 @@ gswm(){
     check-and-pull "${switch_output}" true
 }
 
+# Populate the BRANCH_PICKER array with local branches (main first, rest
+# sorted) and print them as a numbered selection list, highlighting the
+# checked-out branch. Shared by gsw and gbd.
+_branch-picker() {
+    BRANCH_PICKER=()
+    local line sorted_output
+    while IFS= read -r line; do
+        BRANCH_PICKER+=("${line}")
+    done < <(git branch --format='%(refname:short)')
+    # Use helper to sort branches
+    sorted_output=$(sorted-branches-with-main-first "${BRANCH_PICKER[@]}")
+    read -ra BRANCH_PICKER <<< "${sorted_output}"
+
+    local current_branch i
+    current_branch=$(current-branch)
+    echo "Available branches:"
+    for i in "${!BRANCH_PICKER[@]}"; do
+        if [ "${BRANCH_PICKER[${i}]}" = "${current_branch}" ]; then
+            echo -e "  ${i}) \033[0;32m${BRANCH_PICKER[${i}]}\033[0m"
+        else
+            echo "  ${i}) ${BRANCH_PICKER[${i}]}"
+        fi
+    done
+    echo ""
+}
+
 gsw() {
     check-git-repo || return 1
 
     if [ -z "$1" ]; then
-        local all_branches=() line
-        while IFS= read -r line; do
-            all_branches+=("${line}")
-        done < <(git branch --format='%(refname:short)')
-        # Use helper to sort branches
-        local sorted_output
-        sorted_output=$(sorted-branches-with-main-first "${all_branches[@]}")
-        read -ra branches <<< "${sorted_output}"
-        local current_branch=$(current-branch)
-        echo "Available branches:"
-        for i in "${!branches[@]}"; do
-            if [ "${branches[${i}]}" = "${current_branch}" ]; then
-                echo -e "  ${i}) \033[0;32m${branches[${i}]}\033[0m"
-            else
-                echo "  ${i}) ${branches[${i}]}"
-            fi
-        done
-        echo ""
+        _branch-picker
         read -r -p "Select a branch to switch to: " branch_index
-        if [[ -z "${branches[${branch_index}]}" ]]; then
+        if [[ -z "${BRANCH_PICKER[${branch_index}]}" ]]; then
             echo "Invalid selection. Please try again."
             return 1
         fi
-        local switch_output=$(git switch "${branches[${branch_index}]}")
+        local switch_output=$(git switch "${BRANCH_PICKER[${branch_index}]}")
     else
         local switch_output=$(git switch "$1")
     fi
@@ -301,43 +310,27 @@ gitcleanup() {
 gbd() {
     check-git-repo || return 1
 
-    local all_branches=() line
-    while IFS= read -r line; do
-        all_branches+=("${line}")
-    done < <(git branch --format='%(refname:short)')
-    # Use helper to sort branches
-    local sorted_output
-    sorted_output=$(sorted-branches-with-main-first "${all_branches[@]}")
-    read -ra branches <<< "${sorted_output}"
+    _branch-picker
     local current_branch=$(current-branch)
-    echo "Available branches:"
-    for i in "${!branches[@]}"; do
-        if [ "${branches[${i}]}" = "${current_branch}" ]; then
-            echo -e "  ${i}) \033[0;32m${branches[${i}]}\033[0m"
-        else
-            echo "  ${i}) ${branches[${i}]}"
-        fi
-    done
-    echo ""
     read -r -p "Select branches to delete (comma-separated numbers, e.g., 1,2,3): " branch_indices
-    
+
     # Parse comma-separated indices
     IFS=',' read -ra indices <<< "${branch_indices}"
     local branches_to_delete=()
     local invalid_selections=()
-    
+
     # Validate all indices and collect branch names
     for index in "${indices[@]}"; do
         # Trim whitespace
         index=$(echo "${index}" | xargs)
-        
+
         # Check if index is valid
-        if [[ ! "${index}" =~ ^[0-9]+$ ]] || [[ -z "${branches[${index}]}" ]]; then
+        if [[ ! "${index}" =~ ^[0-9]+$ ]] || [[ -z "${BRANCH_PICKER[${index}]}" ]]; then
             invalid_selections+=("${index}")
             continue
         fi
-        
-        local branch_name="${branches[${index}]}"
+
+        local branch_name="${BRANCH_PICKER[${index}]}"
         
         # Prevent deletion of current branch
         if [ "${branch_name}" = "${current_branch}" ]; then

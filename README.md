@@ -2,6 +2,15 @@
 
 This repository contains a collection of useful bash aliases and functions to enhance your command-line productivity.
 
+## Requirements
+
+- **bash 4.0+** (recommended). The code avoids bash-4-only constructs where
+  practical, so stock macOS bash 3.2 works on a best-effort basis.
+- `git` and `curl`.
+- Optional: `gh` (GitHub CLI) or `fj` (Forgejo CLI) for the `pr*` commands;
+  `sudo` for the `--yes` mode of the `*-clean` maintenance commands;
+  `shellcheck` for the development helpers (`--dev` install).
+
 ## Installation
 
 ### Linux/macOS
@@ -27,6 +36,16 @@ curl -sSLo install-windows.sh https://raw.githubusercontent.com/mariugul/bash-al
 bash install-windows.sh
 source ~/.bash_profile
 ```
+
+## Uninstall
+
+```bash
+bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/uninstall.sh)
+```
+
+Removes the files tracked in `~/.bash_aliases.d/.manifest` and the profile
+source block, backing `~/.bash_aliases` up to `~/.bash_aliases.uninstall-bak`
+first. Run with `--dry-run` to preview or `--yes` to skip the confirmation.
 
 ## Usage
 
@@ -78,7 +97,7 @@ Git Commands:
   gcnoverify      : git commit --no-verify
   gf              : git fetch
   gfa             : git fetch --all
-  gfo             : Fetch main branch from primary remote
+  gfo             : Fetch the main branch from the primary remote
   gps             : git push (auto-sets upstream if needed)
   gpsupstream     : git push --set-upstream
   gpu             : git pull
@@ -86,18 +105,26 @@ Git Commands:
   gpf             : git push --force
   gss             : git stash push
   gconfig         : git config --global --edit
-  gsw             : git switch (interactive branch selector)
+  gsw             : git switch (interactive picker) or gsw <branch>
   gswc            : git switch -c (create new branch)
   gswm            : git switch main
   gsw-            : git switch - (previous branch)
   gitundolast     : git reset --soft HEAD~1
-  gitcleanup      : Prune remotes, delete gone branches and their worktrees (interactive)
+  gitcleanup      : Prune remotes, delete gone branches and their worktrees.
+                    Usage: gitcleanup [--dry-run] [--yes]
   sync-fork       : Sync a forked repo with upstream
 
-GitHub CLI:
+Pull Requests (gh for GitHub remotes, fj for Forgejo):
   prcreate        : Create a PR from current branch to main
-  prcheckout      : Checkout a GitHub PR by number
-  prview          : Open current PR in browser
+  prcheckout      : Checkout a PR by number
+  prview          : Open the current branch's PR in the browser
+
+Maintenance (destructive commands are dry-run by default; pass --yes to execute):
+  disk-top        : Show the largest files/directories under a path. Usage: disk-top [path] [count]
+  docker-clean    : Reclaim docker space (docker system prune -f)
+  apt-clean       : Autoremove packages and clear the apt cache (Debian/Ubuntu)
+  journal-clean   : Vacuum systemd journal logs. Usage: journal-clean [--yes] [size]
+  ports           : Show listening TCP/UDP ports
 
 Utility Functions:
   current-repo      : Get the name of the current git repository
@@ -107,6 +134,7 @@ Utility Functions:
   commits-on-branch : Get the number of commits on the current branch
   gc-release-as     : Create a release commit with a specified version
   git-first-commit  : Get the first commit of the current branch
+  text              : Style text with colors and formats
 ```
 
 ## Platform Compatibility
@@ -116,10 +144,11 @@ Utility Functions:
 These commands work on all platforms:
 
 - **Git Commands**: All `g*` aliases (`gs`, `gl`, `gc`, `gco`, `gri`, `grm`, `gbd`, `gsw`, `gitcleanup`, `sync-fork`, etc.)
-- **GitHub CLI**: `prcreate`, `prcheckout`, `prview` (requires `gh` CLI installed)
+- **Pull Requests**: `prcreate`, `prcheckout`, `prview` (requires `gh` for github.com remotes or `fj` for Forgejo remotes)
 - **General**: `c` (clear), `..` navigation, `mkcd`, `myip`, `alias-add`, `pipupgrade`
 - **Text Styling**: `text`, `bold`, `italic`, `underline` (ANSI colors work in Git Bash)
 - **Utilities**: `current-repo`, `current-branch`, `gitmain`, `commits-on-branch`
+- **Maintenance**: `disk-top`, `docker-clean` (with Docker Desktop)
 
 ### Linux/macOS Only
 
@@ -127,7 +156,9 @@ These commands are not available on Windows:
 
 | Command | Reason |
 |---------|--------|
-| `apt-update`, `apt-upgrade` | Debian/Ubuntu package manager |
+| `apt-update`, `apt-upgrade`, `apt-clean` | Debian/Ubuntu package manager |
+| `journal-clean` | systemd journal |
+| `ports` | Uses `ss`/`netstat` Unix flags |
 | `open-alias-repo` | Uses `xdg-open` (Linux desktop) |
 | `sourcevenv` | Uses Unix path `.venv/bin/activate` |
 | `bash-rc`, `bash-aliases` | Assumes `code` command in PATH |
@@ -153,6 +184,12 @@ temporary directory — they never touch real repositories:
 bash tests/test-gitcleanup.sh
 ```
 
+Or run the whole suite:
+
+```bash
+for t in tests/test-*.sh; do bash "$t"; done
+```
+
 ## Updating Aliases
 
 To get the newest updates from the aliases upstream, you can run the following command:
@@ -167,3 +204,7 @@ On Windows (Git Bash), run:
 bash <(curl -sS https://raw.githubusercontent.com/mariugul/bash-aliases/main/install-windows.sh)
 source ~/.bash_profile
 ```
+
+## License
+
+[MIT](LICENSE)
