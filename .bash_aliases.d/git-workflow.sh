@@ -494,23 +494,69 @@ sync-fork() {
     fi
 }
 
-# GitHub CLI functions
+# Pull request commands
+# `gh` handles github.com remotes; `fj` handles Forgejo (any other host).
+_pr-cli() {
+    check-git-repo || return 1
+
+    local primary_remote remote_url
+    primary_remote=$(get-primary-remote) || return 1
+    remote_url=$(git remote get-url "${primary_remote}" 2> /dev/null) || return 1
+
+    if [[ "${remote_url}" == *github.com* ]]; then
+        if command -v gh > /dev/null 2>&1; then
+            echo "gh"
+            return 0
+        fi
+        echo "pr* commands need the GitHub CLI (gh) for '${remote_url}'." >&2
+        return 1
+    fi
+
+    if command -v fj > /dev/null 2>&1; then
+        echo "fj"
+        return 0
+    fi
+    echo "pr* commands need the Forgejo CLI (fj) for '${remote_url}'." >&2
+    return 1
+}
+
 prcreate() {
     check-git-repo || return 1
 
-    gh pr create --base "$(gitmain)" --head "$(current-branch)"
+    local cli
+    cli=$(_pr-cli) || return 1
+    "${cli}" pr create --base "$(gitmain)" --head "$(current-branch)"
 }
 
 prcheckout() {
     check-git-repo || return 1
 
-    # Checks out a GitHub PR when opened from a forked repo
+    local cli
+    cli=$(_pr-cli) || return 1
+
+    # Checks out a PR by number (works for PRs opened from forks too)
     read -r -p "Enter the PR number to checkout: " pr_number
     if [[ -n "${pr_number}" ]]; then
-        gh pr checkout "${pr_number}"
+        "${cli}" pr checkout "${pr_number}"
     else
         echo "No PR number entered. Please try again."
     fi
+}
+
+# Open the current branch's PR in the browser.
+# gh resolves it itself; `fj pr browse` guesses from the current branch.
+prview() {
+    check-git-repo || return 1
+
+    local cli
+    cli=$(_pr-cli) || return 1
+    echo "Opening PR in browser."
+    if [ "${cli}" = "fj" ]; then
+        fj pr browse > /dev/null 2>&1 &
+    else
+        gh pr view -w > /dev/null 2>&1 &
+    fi
+    disown
 }
 
 # Show git stats for commits on current branch
