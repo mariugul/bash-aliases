@@ -207,8 +207,47 @@ _gitcleanup-canon-path() {
     (cd "${1}" 2> /dev/null && pwd -P) || printf '%s\n' "${1}"
 }
 
+# Print " [unmerged: N commit(s)]" when <branch> has commits that are not
+# reachable from <main>. Prints nothing when the branch is fully merged or
+# the count cannot be determined.
+_gitcleanup-unmerged-marker() {
+    local branch="${1}" main="${2}"
+    [ -n "${main}" ] || return 0
+    local count
+    count=$(git rev-list --count "${main}..${branch}" 2> /dev/null) || return 0
+    if [ "${count}" -eq 1 ]; then
+        printf ' [unmerged: 1 commit]'
+    elif [ "${count}" -gt 1 ]; then
+        printf ' [unmerged: %s commits]' "${count}"
+    fi
+}
+
 gitcleanup() {
     check-git-repo || return 1
+
+    local dry_run=false assume_yes=false
+    while [ $# -gt 0 ]; do
+        case "${1}" in
+            --dry-run|-n) dry_run=true ;;
+            --yes|-y)     assume_yes=true ;;
+            --help|-h)
+                echo "Usage: gitcleanup [--dry-run|-n] [--yes|-y]"
+                echo ""
+                echo "Delete local branches whose upstream is gone, including their"
+                echo "linked worktrees. Candidates with commits not on the main"
+                echo "branch are flagged with an unmerged marker."
+                echo ""
+                echo "  --dry-run, -n  List what would be deleted and exit"
+                echo "  --yes, -y      Delete without asking for confirmation"
+                return 0
+                ;;
+            *)
+                echo "Usage: gitcleanup [--dry-run|-n] [--yes|-y]" >&2
+                return 1
+                ;;
+        esac
+        shift
+    done
 
     # Show current remotes for context
     local remotes=$(git remote)
@@ -260,12 +299,16 @@ gitcleanup() {
         fi
     done
 
+    local main_branch
+    main_branch=$(gitmain 2> /dev/null)
+
     echo "Found branches with deleted upstream remotes:"
     for branch in "${del_branches[@]}"; do
-        echo "  - ${branch}"
+        echo "  - ${branch}$(_gitcleanup-unmerged-marker "${branch}" "${main_branch}")"
     done
     for entry in "${rm_worktrees[@]}"; do
-        echo "  - ${entry%%$'\t'*} (remove worktree ${entry#*$'\t'})"
+        branch="${entry%%$'\t'*}"
+        echo "  - ${branch} (remove worktree ${entry#*$'\t'})$(_gitcleanup-unmerged-marker "${branch}" "${main_branch}")"
     done
     for entry in "${skipped[@]}"; do
         echo "  skipped: ${entry}"
@@ -276,7 +319,16 @@ gitcleanup() {
         return
     fi
 
-    read -r -p "Delete these branches? [y/N] " confirm_delete
+    if [ "${dry_run}" = true ]; then
+        echo "Dry run: no branches or worktrees were deleted."
+        return
+    fi
+
+    if [ "${assume_yes}" = false ]; then
+        read -r -p "Delete these branches? [y/N] " confirm_delete
+    else
+        confirm_delete="y"
+    fi
     if [[ ! "${confirm_delete}" =~ ^[Yy]$ ]]; then
         echo "Branch deletion cancelled."
         return
