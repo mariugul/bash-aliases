@@ -109,7 +109,9 @@ ensure_profile() {
         touch "${profile_file}"
     fi
 
-    if ! grep -q "source.*\.bash_aliases" "${profile_file}" 2>/dev/null; then
+    # Match both `source ~/.bash_aliases` and the dot builtin form
+    # `. ~/.bash_aliases` (Ubuntu's stock .bashrc uses the latter).
+    if ! grep -qE '^[[:space:]]*(\.|source)[[:space:]]+.*\.bash_aliases' "${profile_file}" 2>/dev/null; then
         {
             echo ""
             echo "# Source bash aliases"

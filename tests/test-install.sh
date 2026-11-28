@@ -110,6 +110,29 @@ test_source_block_idempotent() {
     fi
 }
 
+test_dot_source_form_detected() {
+    reset_home
+    # Ubuntu's stock .bashrc wires ~/.bash_aliases with the dot builtin,
+    # not the "source" keyword — ensure_profile must still recognise it.
+    cat > "${HOME}/.bashrc" <<'BASHRC'
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+BASHRC
+    cp "${HOME}/.bashrc" "${TEST_TMP}/bashrc.orig"
+    run_installer
+    if cmp -s "${TEST_TMP}/bashrc.orig" "${HOME}/.bashrc"; then
+        pass "existing '. ~/.bash_aliases' wiring detected, .bashrc untouched"
+    else
+        fail "existing '. ~/.bash_aliases' wiring detected, .bashrc untouched" \
+            "$(diff "${TEST_TMP}/bashrc.orig" "${HOME}/.bashrc")"
+    fi
+}
+
 test_curl_uses_fail_flag() {
     reset_home
     run_installer
@@ -150,6 +173,7 @@ test_dev_anchors_to_script_dir() {
 test_bashrc_gets_source_block
 test_profile_fallback_when_no_bashrc
 test_source_block_idempotent
+test_dot_source_form_detected
 test_curl_uses_fail_flag
 test_404_does_not_poison_bash_aliases
 test_dev_anchors_to_script_dir

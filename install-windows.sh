@@ -83,8 +83,9 @@ ensure_bash_profile() {
         touch "${profile_file}"
     fi
 
-    # Check if .bash_aliases is already sourced
-    if ! grep -q "source.*\.bash_aliases" "${profile_file}" 2>/dev/null; then
+    # Check if .bash_aliases is already sourced — match both
+    # `source ~/.bash_aliases` and the dot builtin `. ~/.bash_aliases`.
+    if ! grep -qE '^[[:space:]]*(\.|source)[[:space:]]+.*\.bash_aliases' "${profile_file}" 2>/dev/null; then
         {
             echo ""
             echo "# Source bash aliases"
